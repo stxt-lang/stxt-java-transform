@@ -1,0 +1,7 @@
+# A number puts its text in plain notation: an exponent gives the digits it writes, and -0
+# is 0.
+V:
+	A: <a>
+	B: <b>
+	C: <c>
+	D: <d>

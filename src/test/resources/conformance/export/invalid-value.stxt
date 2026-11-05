@@ -1,0 +1,4 @@
+# An export of a value that does not fit its type is an error.
+Server (com.example.servers):
+	Ports:
+		Port: eighty

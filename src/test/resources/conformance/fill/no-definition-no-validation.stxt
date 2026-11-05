@@ -1,0 +1,4 @@
+# Fill needs neither a namespace nor a definition, and does not validate: nothing defines
+# com.example.x, and Quantity is not a number.
+Order (com.example.x):
+	Quantity: <quantity>

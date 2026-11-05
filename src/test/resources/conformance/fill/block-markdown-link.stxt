@@ -1,0 +1,3 @@
+# A Markdown link at the start of a block has the form of a Slot.
+Menu >>
+	[Home](index)

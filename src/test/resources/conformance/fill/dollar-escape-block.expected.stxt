@@ -1,0 +1,2 @@
+Script >>
+	echo "${HOME}" 7

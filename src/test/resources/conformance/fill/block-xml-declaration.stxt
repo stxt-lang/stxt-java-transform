@@ -1,0 +1,4 @@
+# An XML declaration does not have the form of a Slot: the block is text.
+Body >>
+	<?xml version="1.0" encoding="UTF-8"?>
+	<order>${number}</order>

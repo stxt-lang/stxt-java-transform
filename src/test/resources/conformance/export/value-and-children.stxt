@@ -1,0 +1,4 @@
+# A node with a value and children is not decided yet, and is an error.
+Server (com.example.servers):
+	Ports: two
+		Port: 80

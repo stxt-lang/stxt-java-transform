@@ -1,0 +1,4 @@
+# ${?var} with no data item only removes its own piece of the text.
+Reference: ${number}${?revision}
+Notes >>
+	Revision: ${?revision}.

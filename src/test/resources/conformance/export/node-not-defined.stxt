@@ -1,0 +1,2 @@
+# An export of a node that the schema does not define is an error.
+Client (com.example.servers):

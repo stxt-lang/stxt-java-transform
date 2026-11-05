@@ -1,0 +1,2 @@
+# A text can carry several ${var}, and the text around them is copied as it is.
+Reference: Order ${number}/${carrier}.

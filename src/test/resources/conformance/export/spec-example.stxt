@@ -1,0 +1,14 @@
+# The example of the specification, exported as it shows it.
+# The web server of the office
+Server (com.example.servers):
+	Name: web-01
+	Active: true
+	Ports:
+		Port: 80
+		Port: 443
+	Owner:
+		Person: Ana Ruiz
+		Email: ana@example.com
+	Notes >>
+		Restart after every deployment.
+		Do not switch off during office hours.

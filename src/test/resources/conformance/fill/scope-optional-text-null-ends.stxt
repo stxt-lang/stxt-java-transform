@@ -1,0 +1,3 @@
+# ${?var} puts nothing for a null, even if a level above has the key.
+Customer: {customer}
+	Name: ${?name}

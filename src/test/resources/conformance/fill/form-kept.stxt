@@ -1,0 +1,4 @@
+# The filled node keeps its form: inline stays inline and a block stays a block.
+Note: <t>
+Text >>
+	${t}

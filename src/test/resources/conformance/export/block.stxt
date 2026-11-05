@@ -1,0 +1,4 @@
+# A block is exported as a string with line feeds, keeping the indentation of its lines.
+Notes (com.example.servers) >>
+	one
+	  two

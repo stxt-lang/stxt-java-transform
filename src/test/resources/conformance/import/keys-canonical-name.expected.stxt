@@ -1,0 +1,5 @@
+Server (com.example.servers):
+	Name: x
+	Active: true
+	Ports:
+		Port: 1

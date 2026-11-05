@@ -1,0 +1,2 @@
+# Navigation applies from left to right, and the text follows it.
+Address: {customer}[addresses]${name}, ${street}

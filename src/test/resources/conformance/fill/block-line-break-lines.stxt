@@ -1,0 +1,3 @@
+# A data item with line breaks gives several lines in a block.
+Note >>
+	A: ${t}.

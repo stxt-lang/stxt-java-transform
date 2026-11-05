@@ -1,0 +1,3 @@
+# A ${var} looks up its data item in the current element and then upwards.
+Shipment: [shipments]<carrier>
+	Reference: ${number}/${carrier}

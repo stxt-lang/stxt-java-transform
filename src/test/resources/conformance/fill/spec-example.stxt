@@ -1,0 +1,24 @@
+# The example of the specification, filled as it shows.
+Order (com.example.orders): <number>
+	Date: <date>
+	Currency: EUR
+	Customer: {customer}
+		Name: <name>
+		Email: <email>
+		# The phone is optional
+		Phone: <?phone>
+	Line: [lines]<product>
+		Quantity: <quantity>
+		Price: <price>
+		Note: <?note>
+	Shipment: [shipments]
+		Carrier: <carrier>
+		Reference: ${number}/${carrier}
+		Parcel: [parcels]
+	Instructions >>
+		Order ${number}, dated ${date}.
+		Deliver in the morning.
+	Label >>
+		[shipments]
+		Order ${number}
+		Carrier: ${carrier}

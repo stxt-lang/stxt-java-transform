@@ -1,0 +1,4 @@
+# An optional Slot of the navigation with no data item in the current element
+# removes the node, even if a level above has one.
+Line: [lines]<product>
+	Note: <?note>

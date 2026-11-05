@@ -1,0 +1,3 @@
+# ${?var} with no data item puts nothing, and the node stays.
+Customer:
+	Phone: ${?phone}

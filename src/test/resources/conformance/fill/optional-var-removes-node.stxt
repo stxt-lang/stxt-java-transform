@@ -1,0 +1,4 @@
+# <?var> with no data item removes the node, with its children.
+Customer:
+	Phone: <?phone>
+		Type: mobile

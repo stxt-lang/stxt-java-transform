@@ -1,0 +1,3 @@
+# [list] repeats the node, with its children, once per element.
+Line: [lines]<product>
+	Quantity: <quantity>

@@ -1,0 +1,5 @@
+# ${var} can go in any line of a block.
+Instructions >>
+	Order ${n}, dated ${day}.
+	Deliver in the morning.
+	Signed: ${signature}

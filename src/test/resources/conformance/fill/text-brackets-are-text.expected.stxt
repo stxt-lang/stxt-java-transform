@@ -1,0 +1,5 @@
+Label: See [note] and {note} in <b>
+Html >>
+	<div class="greeting">
+	<p>Hello, Ana</p>
+	<br>

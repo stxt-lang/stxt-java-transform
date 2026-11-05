@@ -1,0 +1,13 @@
+Template (@stxt.template): com.example.servers
+	Structure >>
+		Server (com.example.servers): GROUP
+			Name: (1)
+			Active: (1) BOOLEAN
+			Ports: (1) GROUP
+				Port: (+) NATURAL
+			Owner: (?) GROUP
+				Person: (1)
+				Email: (1) EMAIL
+			Notes: (?) TEXT
+			Load: (?) NUMBER
+			Tag: (*)

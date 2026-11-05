@@ -1,0 +1,4 @@
+# In a block, the leading blanks of a line and the empty lines in between are content; the
+# trailing blanks (STXT-SPEC §10.2) and the final empty lines (§10.3) are not.
+Note >>
+	${t}

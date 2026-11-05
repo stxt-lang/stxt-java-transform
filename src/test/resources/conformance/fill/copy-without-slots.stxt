@@ -1,0 +1,3 @@
+# A value with no Slots is copied as it is.
+Order: 1
+	Currency: EUR

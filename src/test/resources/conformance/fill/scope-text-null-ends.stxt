@@ -1,0 +1,3 @@
+# In the text, a null counts as absent and ends the lookup.
+Customer: {customer}
+	Name: ${name}

@@ -1,0 +1,2 @@
+# Navigation applies from left to right, and can end with a <var>.
+Address: {customer}[addresses]<street>

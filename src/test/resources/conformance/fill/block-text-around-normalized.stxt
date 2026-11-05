@@ -1,0 +1,6 @@
+# The text around the data is normalized too: an optional Slot with no data item leaves no
+# trailing blank and no final empty line.
+Note >>
+	A: ${t} ${?missing}
+	B
+	${?missing}

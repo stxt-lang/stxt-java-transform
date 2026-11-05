@@ -1,0 +1,16 @@
+{
+	"number": "2026-0142",
+	"date": "2026-10-12",
+	"customer": {
+		"name": "Athena Bookshop",
+		"email": "orders@athena.example"
+	},
+	"lines": [
+		{ "product": "A5 notebook", "quantity": 40, "price": 3.25, "note": "Blue cover" },
+		{ "product": "HB pencil", "quantity": 200, "price": 0.45 }
+	],
+	"shipments": [
+		{ "carrier": "Royal Mail", "parcels": ["R-01", "R-02"] },
+		{ "carrier": "DHL", "parcels": ["D-07"] }
+	]
+}

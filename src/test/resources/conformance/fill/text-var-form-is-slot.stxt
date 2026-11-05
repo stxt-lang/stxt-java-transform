@@ -1,0 +1,4 @@
+# Everything with the form ${name} is a Slot, also in a block: ${HOME} expects a data item
+# HOME.
+Script >>
+	echo "${HOME}"

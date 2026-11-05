@@ -1,0 +1,4 @@
+# {object} looks up its object only in the current element.
+Line: [lines]
+	Tax: {tax}
+		Rate: <rate>

@@ -1,0 +1,10 @@
+# Numbers are exported with their value and their digits, the members follow the order of
+# the definition, and a repeatable child is an array.
+Server (com.example.servers):
+	Tag: a
+	Name: x
+	Active: false
+	Ports:
+		Port: 007
+	Load: +.50
+	Tag: b

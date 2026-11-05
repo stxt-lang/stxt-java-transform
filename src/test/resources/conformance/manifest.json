@@ -1,0 +1,2345 @@
+{
+  "specifications": {
+    "STXT-TRANSFORM-SPEC": "2026-10-25",
+    "STXT-SPEC": "2026-09-07"
+  },
+  "categories": {
+    "fill": "Parse `input`, a document with Slots, and fill it with the JSON text of `data` (STXT-TRANSFORM-SPEC §4); the canonical tree of the result must equal the canonical tree of `expected`, compared as a JSON value. The filled document is not validated.",
+    "fill-error": "Parse `input` and fill it with `data`; the fill must fail, and the first error must carry `error.code` and `error.line` (1-based): the line of the node in `input` or, when `error.in` is `data`, the line in `data`. The codes are provisional while STXT-TRANSFORM-SPEC is in Genesis.",
+    "export": "`definitions` is a list of sets of definition files, as in the kit. For every set: load it into one provider, parse `input` and export its root node to JSON (STXT-TRANSFORM-SPEC §3.1); the result must equal `expected` as a JSON value: the same members in the same order, the same elements, strings and literals, and numbers with the same text in plain notation (the text fill puts: digits kept, no exponent).",
+    "export-error": "Same, but the export must fail, and the first error must carry `error.code` and `error.line`: the line of the node. The codes are provisional while STXT-TRANSFORM-SPEC is in Genesis.",
+    "import": "For every set of `definitions`: import the JSON text of `input` as the node `node` of `namespace` (STXT-TRANSFORM-SPEC §3.2); the canonical tree of the result must equal the canonical tree of `expected`, compared as a JSON value. When `valid` is given, validating the imported node with the recursive validator must give no error (true) or some error (false).",
+    "import-error": "Same, but the import must fail, and the first error must carry `error.code` and `error.line`: the line in `input` for an error of the JSON text, 0 for the others. The codes are provisional while STXT-TRANSFORM-SPEC is in Genesis.",
+    "json": "Read the JSON text of `input` with the JSON reader of the transforms (RFC 8259, strict; where RFC 8259 leaves the choice, as JSON.parse, json.loads and Jackson read: the last value of a duplicate key wins, and an unpaired surrogate is kept); it must be accepted, and its value must equal the value of `expected` as `export` compares them.",
+    "json-error": "Reading `input` must fail, and the first error must carry `error.code` and `error.line` (1-based). The reader rejects what RFC 8259 does not allow and applies the limits of STXT-SPEC §11.2 with their default values. A duplicate key and an unpaired surrogate are not errors (category `json`)."
+  },
+  "cases": [
+    {
+      "id": "fill/spec-example",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The example of the specification, filled as it shows.",
+      "input": "fill/spec-example.stxt",
+      "data": "fill/spec-example.json",
+      "expected": "fill/spec-example.expected.stxt"
+    },
+    {
+      "id": "fill/copy-without-slots",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A value with no Slots is copied as it is.",
+      "input": "fill/copy-without-slots.stxt",
+      "data": "fill/copy-without-slots.json",
+      "expected": "fill/copy-without-slots.expected.stxt"
+    },
+    {
+      "id": "fill/comments-not-copied",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The comments do not pass to the filled document.",
+      "input": "fill/comments-not-copied.stxt",
+      "data": "fill/comments-not-copied.json",
+      "expected": "fill/comments-not-copied.expected.stxt"
+    },
+    {
+      "id": "fill/namespace-kept",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The namespace stays where the document with Slots declares it.",
+      "input": "fill/namespace-kept.stxt",
+      "data": "fill/namespace-kept.json",
+      "expected": "fill/namespace-kept.expected.stxt"
+    },
+    {
+      "id": "fill/no-definition-no-validation",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Fill needs neither a namespace nor a definition, and does not validate: nothing defines com.example.x, and Quantity is not a number.",
+      "input": "fill/no-definition-no-validation.stxt",
+      "data": "fill/no-definition-no-validation.json",
+      "expected": "fill/no-definition-no-validation.expected.stxt"
+    },
+    {
+      "id": "fill/every-root-node",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Every root node is filled.",
+      "input": "fill/every-root-node.stxt",
+      "data": "fill/every-root-node.json",
+      "expected": "fill/every-root-node.expected.stxt"
+    },
+    {
+      "id": "fill/value-types",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Strings, numbers and booleans put their text; decimals keep their trailing zeros and nothing is written in exponent form.",
+      "input": "fill/value-types.stxt",
+      "data": "fill/value-types.json",
+      "expected": "fill/value-types.expected.stxt"
+    },
+    {
+      "id": "fill/number-plain-notation",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A number puts its text in plain notation: an exponent gives the digits it writes, and -0 is 0.",
+      "input": "fill/number-plain-notation.stxt",
+      "data": "fill/number-plain-notation.json",
+      "expected": "fill/number-plain-notation.expected.stxt"
+    },
+    {
+      "id": "fill/var-with-children",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> is the value of the node, and the node can have children.",
+      "input": "fill/var-with-children.stxt",
+      "data": "fill/var-with-children.json",
+      "expected": "fill/var-with-children.expected.stxt"
+    },
+    {
+      "id": "fill/var-trailing-blanks",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Only blanks can follow <var>.",
+      "input": "fill/var-trailing-blanks.stxt",
+      "data": "fill/var-trailing-blanks.json",
+      "expected": "fill/var-trailing-blanks.expected.stxt"
+    },
+    {
+      "id": "fill/var-then-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> ends the value: another <var> cannot follow it.",
+      "input": "fill/var-then-var.stxt",
+      "data": "fill/var-then-var.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/var-then-text",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> ends the value: text cannot follow it.",
+      "input": "fill/var-then-text.stxt",
+      "data": "fill/var-then-text.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/var-then-list",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> ends the value: a [list] cannot follow it.",
+      "input": "fill/var-then-list.stxt",
+      "data": "fill/var-then-list.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/list-var-then-text",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> ends the value also after a [list].",
+      "input": "fill/list-var-then-text.stxt",
+      "data": "fill/list-var-then-text.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/var-same-as-text-var",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> and a text that is only ${var} give the same.",
+      "input": "fill/var-same-as-text-var.stxt",
+      "data": "fill/var-same-as-text-var.json",
+      "expected": "fill/var-same-as-text-var.expected.stxt"
+    },
+    {
+      "id": "fill/text-vars",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A text can carry several ${var}, and the text around them is copied as it is.",
+      "input": "fill/text-vars.stxt",
+      "data": "fill/text-vars.json",
+      "expected": "fill/text-vars.expected.stxt"
+    },
+    {
+      "id": "fill/block-text-vars",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "${var} can go in any line of a block.",
+      "input": "fill/block-text-vars.stxt",
+      "data": "fill/block-text-vars.json",
+      "expected": "fill/block-text-vars.expected.stxt"
+    },
+    {
+      "id": "fill/slot-name-characters",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The name of a Slot has ASCII letters, digits, hyphens and underscores.",
+      "input": "fill/slot-name-characters.stxt",
+      "data": "fill/slot-name-characters.json",
+      "expected": "fill/slot-name-characters.expected.stxt"
+    },
+    {
+      "id": "fill/not-slot-form-is-text",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "What does not have the form of a Slot is text.",
+      "input": "fill/not-slot-form-is-text.stxt",
+      "data": "fill/not-slot-form-is-text.json",
+      "expected": "fill/not-slot-form-is-text.expected.stxt"
+    },
+    {
+      "id": "fill/question-mark-outside-is-text",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A ? outside the delimiters is text: it does not make a Slot optional.",
+      "input": "fill/question-mark-outside-is-text.stxt",
+      "data": "fill/question-mark-outside-is-text.json",
+      "expected": "fill/question-mark-outside-is-text.expected.stxt"
+    },
+    {
+      "id": "fill/text-brackets-are-text",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "In the text, <x>, [x] and {x} are text, inline and in a block.",
+      "input": "fill/text-brackets-are-text.stxt",
+      "data": "fill/text-brackets-are-text.json",
+      "expected": "fill/text-brackets-are-text.expected.stxt"
+    },
+    {
+      "id": "fill/text-var-form-is-slot",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Everything with the form ${name} is a Slot, also in a block: ${HOME} expects a data item HOME.",
+      "input": "fill/text-var-form-is-slot.stxt",
+      "data": "fill/text-var-form-is-slot.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 3
+      }
+    },
+    {
+      "id": "fill/dollar-escape-block",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "$${ is a literal ${.",
+      "input": "fill/dollar-escape-block.stxt",
+      "data": "fill/dollar-escape-block.json",
+      "expected": "fill/dollar-escape-block.expected.stxt"
+    },
+    {
+      "id": "fill/dollar-escape-inline",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "$${ is a literal ${, also before what is not a Slot.",
+      "input": "fill/dollar-escape-inline.stxt",
+      "data": "fill/dollar-escape-inline.json",
+      "expected": "fill/dollar-escape-inline.expected.stxt"
+    },
+    {
+      "id": "fill/double-dollar-copied",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A $$ not followed by { is copied as it is.",
+      "input": "fill/double-dollar-copied.stxt",
+      "data": "fill/double-dollar-copied.json",
+      "expected": "fill/double-dollar-copied.expected.stxt"
+    },
+    {
+      "id": "fill/slot-name-case-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The name of a <var> is looked up as it is, case-sensitively: <Date> does not find date.",
+      "input": "fill/slot-name-case-var.stxt",
+      "data": "fill/slot-name-case-var.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/slot-name-case-text-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The name of a ${var} is looked up as it is, case-sensitively: ${Date} does not find date.",
+      "input": "fill/slot-name-case-text-var.stxt",
+      "data": "fill/slot-name-case-text-var.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/scope-element-then-up",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A ${var} looks up its data item in the current element and then upwards.",
+      "input": "fill/scope-element-then-up.stxt",
+      "data": "fill/scope-element-then-up.json",
+      "expected": "fill/scope-element-then-up.expected.stxt"
+    },
+    {
+      "id": "fill/scope-nearest-hides",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "In the text, the nearest data item hides the one above.",
+      "input": "fill/scope-nearest-hides.stxt",
+      "data": "fill/scope-nearest-hides.json",
+      "expected": "fill/scope-nearest-hides.expected.stxt"
+    },
+    {
+      "id": "fill/scope-navigation-var-local",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> looks up its data item only in the current element.",
+      "input": "fill/scope-navigation-var-local.stxt",
+      "data": "fill/scope-navigation-var-local.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 3
+      }
+    },
+    {
+      "id": "fill/scope-navigation-list-local",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "[list] looks up its array only in the current element.",
+      "input": "fill/scope-navigation-list-local.stxt",
+      "data": "fill/scope-navigation-list-local.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 3
+      }
+    },
+    {
+      "id": "fill/scope-navigation-object-local",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "{object} looks up its object only in the current element.",
+      "input": "fill/scope-navigation-object-local.stxt",
+      "data": "fill/scope-navigation-object-local.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 3
+      }
+    },
+    {
+      "id": "fill/scope-optional-navigation-local",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An optional Slot of the navigation with no data item in the current element removes the node, even if a level above has one.",
+      "input": "fill/scope-optional-navigation-local.stxt",
+      "data": "fill/scope-optional-navigation-local.json",
+      "expected": "fill/scope-optional-navigation-local.expected.stxt"
+    },
+    {
+      "id": "fill/scope-text-null-ends",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "In the text, a null counts as absent and ends the lookup.",
+      "input": "fill/scope-text-null-ends.stxt",
+      "data": "fill/scope-text-null-ends.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 3
+      }
+    },
+    {
+      "id": "fill/scope-optional-text-null-ends",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "${?var} puts nothing for a null, even if a level above has the key.",
+      "input": "fill/scope-optional-text-null-ends.stxt",
+      "data": "fill/scope-optional-text-null-ends.json",
+      "expected": "fill/scope-optional-text-null-ends.expected.stxt"
+    },
+    {
+      "id": "fill/object-node-and-children",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An object applies to the node and to its children.",
+      "input": "fill/object-node-and-children.stxt",
+      "data": "fill/object-node-and-children.json",
+      "expected": "fill/object-node-and-children.expected.stxt"
+    },
+    {
+      "id": "fill/null-is-absent",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A null counts as absent.",
+      "input": "fill/null-is-absent.stxt",
+      "data": "fill/null-is-absent.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/required-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Every Slot is required: <var>.",
+      "input": "fill/required-var.stxt",
+      "data": "fill/required-var.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/required-text-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Every Slot is required: ${var}.",
+      "input": "fill/required-text-var.stxt",
+      "data": "fill/required-text-var.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/required-object",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Every Slot is required: {object}.",
+      "input": "fill/required-object.stxt",
+      "data": "fill/required-object.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/required-list",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Every Slot is required: [list].",
+      "input": "fill/required-list.stxt",
+      "data": "fill/required-list.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/optional-var-removes-node",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<?var> with no data item removes the node, with its children.",
+      "input": "fill/optional-var-removes-node.stxt",
+      "data": "fill/optional-var-removes-node.json",
+      "expected": "fill/optional-var-removes-node.expected.stxt"
+    },
+    {
+      "id": "fill/optional-var-with-data",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<?var> with a data item puts it.",
+      "input": "fill/optional-var-with-data.stxt",
+      "data": "fill/optional-var-with-data.json",
+      "expected": "fill/optional-var-with-data.expected.stxt"
+    },
+    {
+      "id": "fill/optional-list-object-with-data",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "[?list] and {?object} with a data item behave as [list] and {object}.",
+      "input": "fill/optional-list-object-with-data.stxt",
+      "data": "fill/optional-list-object-with-data.json",
+      "expected": "fill/optional-list-object-with-data.expected.stxt"
+    },
+    {
+      "id": "fill/optional-text-var-node-stays",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "${?var} with no data item puts nothing, and the node stays.",
+      "input": "fill/optional-text-var-node-stays.stxt",
+      "data": "fill/optional-text-var-node-stays.json",
+      "expected": "fill/optional-text-var-node-stays.expected.stxt"
+    },
+    {
+      "id": "fill/optional-text-var-piece",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "${?var} with no data item only removes its own piece of the text.",
+      "input": "fill/optional-text-var-piece.stxt",
+      "data": "fill/optional-text-var-piece.json",
+      "expected": "fill/optional-text-var-piece.expected.stxt"
+    },
+    {
+      "id": "fill/optional-list-object-removed",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "[?list] and {?object} with no data item remove the node, with its children.",
+      "input": "fill/optional-list-object-removed.stxt",
+      "data": "fill/optional-list-object-removed.json",
+      "expected": "fill/optional-list-object-removed.expected.stxt"
+    },
+    {
+      "id": "fill/optional-object-null",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "{?object} with a null removes the node.",
+      "input": "fill/optional-object-null.stxt",
+      "data": "fill/optional-object-null.json",
+      "expected": "fill/optional-object-null.expected.stxt"
+    },
+    {
+      "id": "fill/empty-array",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An empty array produces no node and is not an error.",
+      "input": "fill/empty-array.stxt",
+      "data": "fill/empty-array.json",
+      "expected": "fill/empty-array.expected.stxt"
+    },
+    {
+      "id": "fill/mismatch-var-object",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> expects a string, a number or a boolean, not an object.",
+      "input": "fill/mismatch-var-object.stxt",
+      "data": "fill/mismatch-var-object.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/mismatch-var-array",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> expects a string, a number or a boolean, not an array.",
+      "input": "fill/mismatch-var-array.stxt",
+      "data": "fill/mismatch-var-array.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/mismatch-text-var-object",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "${var} expects a string, a number or a boolean, not an object.",
+      "input": "fill/mismatch-text-var-object.stxt",
+      "data": "fill/mismatch-text-var-object.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/mismatch-list-string",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "[list] expects an array, not a string.",
+      "input": "fill/mismatch-list-string.stxt",
+      "data": "fill/mismatch-list-string.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/mismatch-list-object",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "[list] expects an array, not an object.",
+      "input": "fill/mismatch-list-object.stxt",
+      "data": "fill/mismatch-list-object.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/mismatch-object-string",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "{object} expects an object, not a string.",
+      "input": "fill/mismatch-object-string.stxt",
+      "data": "fill/mismatch-object-string.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/mismatch-object-array",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "{object} expects an object, not an array.",
+      "input": "fill/mismatch-object-array.stxt",
+      "data": "fill/mismatch-object-array.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/data-not-json",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The data is a JSON text: an unfinished one is an error, at its line in the data.",
+      "input": "fill/data-not-json.stxt",
+      "data": "fill/data-not-json.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 2,
+        "in": "data"
+      }
+    },
+    {
+      "id": "fill/list-repeats-node",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "[list] repeats the node, with its children, once per element.",
+      "input": "fill/list-repeats-node.stxt",
+      "data": "fill/list-repeats-node.json",
+      "expected": "fill/list-repeats-node.expected.stxt"
+    },
+    {
+      "id": "fill/list-at-root",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A list at the root gives several root nodes.",
+      "input": "fill/list-at-root.stxt",
+      "data": "fill/list-at-root.json",
+      "expected": "fill/list-at-root.expected.stxt"
+    },
+    {
+      "id": "fill/list-of-values",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An element that is a value is the value of the node.",
+      "input": "fill/list-of-values.stxt",
+      "data": "fill/list-of-values.json",
+      "expected": "fill/list-of-values.expected.stxt"
+    },
+    {
+      "id": "fill/list-of-values-block",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An element that is a value is the content of a block, with its line breaks.",
+      "input": "fill/list-of-values-block.stxt",
+      "data": "fill/list-of-values-block.json",
+      "expected": "fill/list-of-values-block.expected.stxt"
+    },
+    {
+      "id": "fill/list-of-values-then-text",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A node that takes its value from the list has nothing else: no text.",
+      "input": "fill/list-of-values-then-text.stxt",
+      "data": "fill/list-of-values-then-text.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/list-of-values-then-text-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A node that takes its value from the list has nothing else: no ${var}.",
+      "input": "fill/list-of-values-then-text-var.stxt",
+      "data": "fill/list-of-values-then-text-var.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/list-of-values-children",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A node that takes its value from the list has nothing else: no children.",
+      "input": "fill/list-of-values-children.stxt",
+      "data": "fill/list-of-values-children.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/list-of-values-block-lines",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A block that takes its content from the list has nothing else: no more lines.",
+      "input": "fill/list-of-values-block-lines.stxt",
+      "data": "fill/list-of-values-block-lines.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/list-of-values-then-object",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "No navigation can follow a list of values: no {object}.",
+      "input": "fill/list-of-values-then-object.stxt",
+      "data": "fill/list-of-values-then-object.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/list-of-values-then-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "No navigation can follow a list of values: no <var>.",
+      "input": "fill/list-of-values-then-var.stxt",
+      "data": "fill/list-of-values-then-var.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/array-mixed",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An array that mixes values and objects is an error.",
+      "input": "fill/array-mixed.stxt",
+      "data": "fill/array-mixed.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/array-in-array",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An array inside an array is an error.",
+      "input": "fill/array-in-array.stxt",
+      "data": "fill/array-in-array.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/null-element-value",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A null element is as if it were not there, among values.",
+      "input": "fill/null-element-value.stxt",
+      "data": "fill/null-element-value.json",
+      "expected": "fill/null-element-value.expected.stxt"
+    },
+    {
+      "id": "fill/null-element-object",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A null element is as if it were not there, among objects.",
+      "input": "fill/null-element-object.stxt",
+      "data": "fill/null-element-object.json",
+      "expected": "fill/null-element-object.expected.stxt"
+    },
+    {
+      "id": "fill/navigation-left-to-right-text",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Navigation applies from left to right, and the text follows it.",
+      "input": "fill/navigation-left-to-right-text.stxt",
+      "data": "fill/navigation-left-to-right-text.json",
+      "expected": "fill/navigation-left-to-right-text.expected.stxt"
+    },
+    {
+      "id": "fill/navigation-left-to-right-var",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Navigation applies from left to right, and can end with a <var>.",
+      "input": "fill/navigation-left-to-right-var.stxt",
+      "data": "fill/navigation-left-to-right-var.json",
+      "expected": "fill/navigation-left-to-right-var.expected.stxt"
+    },
+    {
+      "id": "fill/nested-lists",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Each list repeats over what the previous one leaves.",
+      "input": "fill/nested-lists.stxt",
+      "data": "fill/nested-lists.json",
+      "expected": "fill/nested-lists.expected.stxt"
+    },
+    {
+      "id": "fill/navigation-blanks",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Blanks are allowed between the navigation and before the text.",
+      "input": "fill/navigation-blanks.stxt",
+      "data": "fill/navigation-blanks.json",
+      "expected": "fill/navigation-blanks.expected.stxt"
+    },
+    {
+      "id": "fill/navigation-tab",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A tab is a blank between the navigation.",
+      "input": "fill/navigation-tab.stxt",
+      "data": "fill/navigation-tab.json",
+      "expected": "fill/navigation-tab.expected.stxt"
+    },
+    {
+      "id": "fill/text-not-navigation",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Once the text has started, what would be navigation is text.",
+      "input": "fill/text-not-navigation.stxt",
+      "data": "fill/text-not-navigation.json",
+      "expected": "fill/text-not-navigation.expected.stxt"
+    },
+    {
+      "id": "fill/block-navigation-not-copied",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A first block line with only navigation applies and is not copied.",
+      "input": "fill/block-navigation-not-copied.stxt",
+      "data": "fill/block-navigation-not-copied.json",
+      "expected": "fill/block-navigation-not-copied.expected.stxt"
+    },
+    {
+      "id": "fill/block-first-line-text",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A first block line that does not start with navigation is text.",
+      "input": "fill/block-first-line-text.stxt",
+      "data": "fill/block-first-line-text.json",
+      "expected": "fill/block-first-line-text.expected.stxt"
+    },
+    {
+      "id": "fill/block-later-navigation-is-text",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Navigation after the first line of a block is text.",
+      "input": "fill/block-later-navigation-is-text.stxt",
+      "data": "fill/block-later-navigation-is-text.json",
+      "expected": "fill/block-later-navigation-is-text.expected.stxt"
+    },
+    {
+      "id": "fill/block-first-line-tags-text",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A first block line that starts with something else is text, with its brackets.",
+      "input": "fill/block-first-line-tags-text.stxt",
+      "data": "fill/block-first-line-tags-text.json",
+      "expected": "fill/block-first-line-tags-text.expected.stxt"
+    },
+    {
+      "id": "fill/block-navigation-blanks",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A first block line of navigation can have blanks around and between the Slots.",
+      "input": "fill/block-navigation-blanks.stxt",
+      "data": "fill/block-navigation-blanks.json",
+      "expected": "fill/block-navigation-blanks.expected.stxt"
+    },
+    {
+      "id": "fill/block-navigation-then-text",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A first block line that starts with navigation has nothing else: no text.",
+      "input": "fill/block-navigation-then-text.stxt",
+      "data": "fill/block-navigation-then-text.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-var-then-text",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A first block line that starts with <var> has nothing else.",
+      "input": "fill/block-var-then-text.stxt",
+      "data": "fill/block-var-then-text.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-navigation-then-text-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A first block line that starts with navigation has nothing else: no ${var}.",
+      "input": "fill/block-navigation-then-text-var.stxt",
+      "data": "fill/block-navigation-then-text-var.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-navigation-like-then-text",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A first block line that looks like navigation and has more is an error.",
+      "input": "fill/block-navigation-like-then-text.stxt",
+      "data": "fill/block-navigation-like-then-text.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-markdown-link",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A Markdown link at the start of a block has the form of a Slot.",
+      "input": "fill/block-markdown-link.stxt",
+      "data": "fill/block-markdown-link.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-var-content",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> is the content of a block, with its line breaks.",
+      "input": "fill/block-var-content.stxt",
+      "data": "fill/block-var-content.json",
+      "expected": "fill/block-var-content.expected.stxt"
+    },
+    {
+      "id": "fill/block-text-var-content",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "${var} as the only line of a block gives the same as <var>.",
+      "input": "fill/block-text-var-content.stxt",
+      "data": "fill/block-text-var-content.json",
+      "expected": "fill/block-text-var-content.expected.stxt"
+    },
+    {
+      "id": "fill/block-list-then-var",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The first line of a block can repeat and then put the content.",
+      "input": "fill/block-list-then-var.stxt",
+      "data": "fill/block-list-then-var.json",
+      "expected": "fill/block-list-then-var.expected.stxt"
+    },
+    {
+      "id": "fill/block-optional-var-removes",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<?var> as the content of a block with no data item removes the block.",
+      "input": "fill/block-optional-var-removes.stxt",
+      "data": "fill/block-optional-var-removes.json",
+      "expected": "fill/block-optional-var-removes.expected.stxt"
+    },
+    {
+      "id": "fill/block-var-no-data",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> as the content of a block is required.",
+      "input": "fill/block-var-no-data.stxt",
+      "data": "fill/block-var-no-data.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-var-mismatch",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "<var> as the content of a block expects a string, a number or a boolean.",
+      "input": "fill/block-var-mismatch.stxt",
+      "data": "fill/block-var-mismatch.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-var-more-lines",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A block whose content is <var> has no more lines.",
+      "input": "fill/block-var-more-lines.stxt",
+      "data": "fill/block-var-more-lines.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-html-tag-slot",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An HTML block cannot start with a tag that has the form of a Slot.",
+      "input": "fill/block-html-tag-slot.stxt",
+      "data": "fill/block-html-tag-slot.json",
+      "error": {
+        "code": "SLOT_MISPLACED",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-doctype",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An HTML block can start with <!DOCTYPE html>, which does not have the form of a Slot.",
+      "input": "fill/block-doctype.stxt",
+      "data": "fill/block-doctype.json",
+      "expected": "fill/block-doctype.expected.stxt"
+    },
+    {
+      "id": "fill/block-xml-declaration",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An XML block can start with an XML declaration, which does not have the form of a Slot.",
+      "input": "fill/block-xml-declaration.stxt",
+      "data": "fill/block-xml-declaration.json",
+      "expected": "fill/block-xml-declaration.expected.stxt"
+    },
+    {
+      "id": "fill/data-not-filled-again",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "What the data puts is not filled again.",
+      "input": "fill/data-not-filled-again.stxt",
+      "data": "fill/data-not-filled-again.json",
+      "expected": "fill/data-not-filled-again.expected.stxt"
+    },
+    {
+      "id": "fill/block-empty-first-line",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An empty first block line is text.",
+      "input": "fill/block-empty-first-line.stxt",
+      "data": "fill/block-empty-first-line.json",
+      "expected": "fill/block-empty-first-line.expected.stxt"
+    },
+    {
+      "id": "fill/block-blank-first-line",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A blank first block line is text.",
+      "input": "fill/block-blank-first-line.stxt",
+      "data": "fill/block-blank-first-line.json",
+      "expected": "fill/block-blank-first-line.expected.stxt"
+    },
+    {
+      "id": "fill/block-indentation-kept",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A block keeps the indentation of its lines.",
+      "input": "fill/block-indentation-kept.stxt",
+      "data": "fill/block-indentation-kept.json",
+      "expected": "fill/block-indentation-kept.expected.stxt"
+    },
+    {
+      "id": "fill/form-kept",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The filled node keeps its form: inline stays inline and a block stays a block.",
+      "input": "fill/form-kept.stxt",
+      "data": "fill/form-kept.json",
+      "expected": "fill/form-kept.expected.stxt"
+    },
+    {
+      "id": "fill/inline-line-break-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A data item with line breaks is an error in an inline value.",
+      "input": "fill/inline-line-break-var.stxt",
+      "data": "fill/inline-line-break-var.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/inline-line-break-text-var",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A data item with line breaks is an error in an inline text.",
+      "input": "fill/inline-line-break-text-var.stxt",
+      "data": "fill/inline-line-break-text-var.json",
+      "error": {
+        "code": "SLOT_DATA_MISMATCH",
+        "line": 2
+      }
+    },
+    {
+      "id": "fill/block-line-break-lines",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "A data item with line breaks gives several lines in a block.",
+      "input": "fill/block-line-break-lines.stxt",
+      "data": "fill/block-line-break-lines.json",
+      "expected": "fill/block-line-break-lines.expected.stxt"
+    },
+    {
+      "id": "fill/inline-trimmed",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An inline value has no blanks at either end (STXT-SPEC §5.1).",
+      "input": "fill/inline-trimmed.stxt",
+      "data": "fill/inline-trimmed.json",
+      "expected": "fill/inline-trimmed.expected.stxt"
+    },
+    {
+      "id": "fill/inline-inner-blanks",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "Inside an inline text, the blanks of the data stay.",
+      "input": "fill/inline-inner-blanks.stxt",
+      "data": "fill/inline-inner-blanks.json",
+      "expected": "fill/inline-inner-blanks.expected.stxt"
+    },
+    {
+      "id": "fill/block-normalized",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "In a block, the leading blanks of a line and the empty lines in between are content; the trailing blanks (STXT-SPEC §10.2) and the final empty lines (§10.3) are not.",
+      "input": "fill/block-normalized.stxt",
+      "data": "fill/block-normalized.json",
+      "expected": "fill/block-normalized.expected.stxt"
+    },
+    {
+      "id": "fill/block-text-around-normalized",
+      "category": "fill",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "The text around the data is normalized too: an optional Slot with no data item leaves no trailing blank and no final empty line.",
+      "input": "fill/block-text-around-normalized.stxt",
+      "data": "fill/block-text-around-normalized.json",
+      "expected": "fill/block-text-around-normalized.expected.stxt"
+    },
+    {
+      "id": "fill/error-line",
+      "category": "fill-error",
+      "spec": "STXT-TRANSFORM-SPEC §4",
+      "description": "An error carries the line of the node it is about.",
+      "input": "fill/error-line.stxt",
+      "data": "fill/error-line.json",
+      "error": {
+        "code": "SLOT_NO_DATA",
+        "line": 3
+      }
+    },
+    {
+      "id": "export/spec-example",
+      "category": "export",
+      "spec": "STXT-TRANSFORM-SPEC §3.1",
+      "description": "The example of the specification, exported as it shows it.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "export/spec-example.stxt",
+      "expected": "export/spec-example.expected.json"
+    },
+    {
+      "id": "export/numbers-and-repeatable",
+      "category": "export",
+      "spec": "STXT-TRANSFORM-SPEC §3.1",
+      "description": "Numbers are exported with their value and their digits, the members follow the order of the definition, and a repeatable child is an array.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "export/numbers-and-repeatable.stxt",
+      "expected": "export/numbers-and-repeatable.expected.json"
+    },
+    {
+      "id": "export/block",
+      "category": "export",
+      "spec": "STXT-TRANSFORM-SPEC §3.1",
+      "description": "A block is exported as a string with line feeds, keeping the indentation of its lines.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "export/block.stxt",
+      "expected": "export/block.expected.json"
+    },
+    {
+      "id": "export/schema-not-found",
+      "category": "export-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.1",
+      "description": "An export needs the schema of the namespace.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "export/schema-not-found.stxt",
+      "error": {
+        "code": "SCHEMA_NOT_FOUND",
+        "line": 2
+      }
+    },
+    {
+      "id": "export/node-not-defined",
+      "category": "export-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.1",
+      "description": "An export of a node that the schema does not define is an error.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "export/node-not-defined.stxt",
+      "error": {
+        "code": "NODE_NOT_DEFINED_IN_SCHEMA",
+        "line": 2
+      }
+    },
+    {
+      "id": "export/invalid-value",
+      "category": "export-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.1",
+      "description": "An export of a value that does not fit its type is an error.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "export/invalid-value.stxt",
+      "error": {
+        "code": "INVALID_VALUE",
+        "line": 4
+      }
+    },
+    {
+      "id": "export/value-and-children",
+      "category": "export-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.1",
+      "description": "A node with a value and children is not decided yet, and is an error.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "export/value-and-children.stxt",
+      "error": {
+        "code": "EXPORT_VALUE_AND_CHILDREN",
+        "line": 3
+      }
+    },
+    {
+      "id": "import/spec-example",
+      "category": "import",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "The export of the example comes back with the same tree, and it is valid.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/spec-example.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "expected": "import/spec-example.expected.stxt",
+      "valid": true
+    },
+    {
+      "id": "import/any-leaf-value",
+      "category": "import",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A string, a number or a boolean is accepted for any node with no children, and written as text.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/any-leaf-value.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "expected": "import/any-leaf-value.expected.stxt",
+      "valid": true
+    },
+    {
+      "id": "import/leaf-value-not-valid",
+      "category": "import",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "What does not fit its type is imported as text, and the validation of the imported document rejects it.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/leaf-value-not-valid.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "expected": "import/leaf-value-not-valid.expected.stxt",
+      "valid": false
+    },
+    {
+      "id": "import/keys-canonical-name",
+      "category": "import",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "The keys are matched with the children by their canonical name.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/keys-canonical-name.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "expected": "import/keys-canonical-name.expected.stxt",
+      "valid": true
+    },
+    {
+      "id": "import/form-inline",
+      "category": "import",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A TEXT, which allows both forms, is inline when inline loses nothing.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/form-inline.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "expected": "import/form-inline.expected.stxt"
+    },
+    {
+      "id": "import/form-block-lines",
+      "category": "import",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A TEXT with line breaks is a block.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/form-block-lines.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "expected": "import/form-block-lines.expected.stxt"
+    },
+    {
+      "id": "import/form-block-leading-blanks",
+      "category": "import",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A TEXT that starts with blanks is a block, which keeps them.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/form-block-leading-blanks.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "expected": "import/form-block-leading-blanks.expected.stxt"
+    },
+    {
+      "id": "import/form-block-not-allowed",
+      "category": "import",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A node whose type has only the inline form gets a block for a text with lines, and the validation rejects it.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/form-block-not-allowed.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "expected": "import/form-block-not-allowed.expected.stxt",
+      "valid": false
+    },
+    {
+      "id": "import/duplicate-key",
+      "category": "import",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A duplicate key is accepted, and the last value wins.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/duplicate-key.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "expected": "import/duplicate-key.expected.stxt"
+    },
+    {
+      "id": "import/mismatch-array-number",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A node with repeatable children expects an array, not a number.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/mismatch-array-number.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "error": {
+        "code": "IMPORT_DATA_MISMATCH",
+        "line": 0
+      }
+    },
+    {
+      "id": "import/mismatch-object-array",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A node with children expects an object, not an array.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/mismatch-object-array.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "error": {
+        "code": "IMPORT_DATA_MISMATCH",
+        "line": 0
+      }
+    },
+    {
+      "id": "import/mismatch-value-object",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A node with no children expects a string, a number or a boolean, not an object.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/mismatch-value-object.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "error": {
+        "code": "IMPORT_DATA_MISMATCH",
+        "line": 0
+      }
+    },
+    {
+      "id": "import/mismatch-value-null",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A node with no children expects a string, a number or a boolean, not null.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/mismatch-value-null.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "error": {
+        "code": "IMPORT_DATA_MISMATCH",
+        "line": 0
+      }
+    },
+    {
+      "id": "import/mismatch-repeatable-string",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A repeatable child expects an array, not a string.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/mismatch-repeatable-string.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "error": {
+        "code": "IMPORT_DATA_MISMATCH",
+        "line": 0
+      }
+    },
+    {
+      "id": "import/mismatch-root-array",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "The root node, with children, expects an object, not an array.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/mismatch-root-array.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "error": {
+        "code": "IMPORT_DATA_MISMATCH",
+        "line": 0
+      }
+    },
+    {
+      "id": "import/key-not-defined",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "A key that is not a child of its node is an error.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/key-not-defined.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "error": {
+        "code": "IMPORT_KEY_NOT_DEFINED",
+        "line": 0
+      }
+    },
+    {
+      "id": "import/schema-not-found",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "An import needs the schema of the namespace.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/schema-not-found.json",
+      "node": "Server",
+      "namespace": "com.example.other",
+      "error": {
+        "code": "SCHEMA_NOT_FOUND",
+        "line": 0
+      }
+    },
+    {
+      "id": "import/node-not-defined",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "An import of a node that the schema does not define is an error.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/node-not-defined.json",
+      "node": "Client",
+      "namespace": "com.example.servers",
+      "error": {
+        "code": "NODE_NOT_DEFINED_IN_SCHEMA",
+        "line": 0
+      }
+    },
+    {
+      "id": "import/not-json",
+      "category": "import-error",
+      "spec": "STXT-TRANSFORM-SPEC §3.2",
+      "description": "The input is a JSON text: single quotes are not JSON.",
+      "definitions": [
+        [
+          "definitions/com.example.servers.template.stxt"
+        ]
+      ],
+      "input": "import/not-json.json",
+      "node": "Server",
+      "namespace": "com.example.servers",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/literal-true",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "The literal true.",
+      "input": "json/literal-true.json",
+      "expected": "json/literal-true.expected.json"
+    },
+    {
+      "id": "json/literal-false",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "The literal false.",
+      "input": "json/literal-false.json",
+      "expected": "json/literal-false.expected.json"
+    },
+    {
+      "id": "json/literal-null",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "The literal null.",
+      "input": "json/literal-null.json",
+      "expected": "json/literal-null.expected.json"
+    },
+    {
+      "id": "json/number-integer",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An integer.",
+      "input": "json/number-integer.json",
+      "expected": "json/number-integer.expected.json"
+    },
+    {
+      "id": "json/number-trailing-zeros",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A decimal keeps its trailing zeros.",
+      "input": "json/number-trailing-zeros.json",
+      "expected": "json/number-trailing-zeros.expected.json"
+    },
+    {
+      "id": "json/number-zero-fraction",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A decimal with a zero fraction keeps it.",
+      "input": "json/number-zero-fraction.json",
+      "expected": "json/number-zero-fraction.expected.json"
+    },
+    {
+      "id": "json/number-exponent",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A number with an exponent is the number it writes.",
+      "input": "json/number-exponent.json",
+      "expected": "json/number-exponent.expected.json"
+    },
+    {
+      "id": "json/number-exponent-upper",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An exponent in upper case.",
+      "input": "json/number-exponent-upper.json",
+      "expected": "json/number-exponent-upper.expected.json"
+    },
+    {
+      "id": "json/number-negative-exponent",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A negative exponent gives decimals.",
+      "input": "json/number-negative-exponent.json",
+      "expected": "json/number-negative-exponent.expected.json"
+    },
+    {
+      "id": "json/number-negative-exponent-digits",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A negative exponent keeps the digits of the number.",
+      "input": "json/number-negative-exponent-digits.json",
+      "expected": "json/number-negative-exponent-digits.expected.json"
+    },
+    {
+      "id": "json/number-negative-zero",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "-0 is the number 0.",
+      "input": "json/number-negative-zero.json",
+      "expected": "json/number-negative-zero.expected.json"
+    },
+    {
+      "id": "json/number-big",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An integer of any size, with all its digits.",
+      "input": "json/number-big.json",
+      "expected": "json/number-big.expected.json"
+    },
+    {
+      "id": "json/string",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A string.",
+      "input": "json/string.json",
+      "expected": "json/string.expected.json"
+    },
+    {
+      "id": "json/objects-and-arrays",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "Objects keep their keys in order, and arrays their elements, of any kind.",
+      "input": "json/objects-and-arrays.json",
+      "expected": "json/objects-and-arrays.expected.json"
+    },
+    {
+      "id": "json/keys-case-sensitive",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "Keys are compared as they are: these are two keys.",
+      "input": "json/keys-case-sensitive.json",
+      "expected": "json/keys-case-sensitive.expected.json"
+    },
+    {
+      "id": "json/blanks",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "The four blanks of JSON: space, tab, line feed and carriage return.",
+      "input": "json/blanks.json",
+      "expected": "json/blanks.expected.json"
+    },
+    {
+      "id": "json/string-escapes",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "The escapes of a string, \\u included, and a surrogate pair as one character.",
+      "input": "json/string-escapes.json",
+      "expected": "json/string-escapes.expected.json"
+    },
+    {
+      "id": "json/string-raw-characters",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "Any character but the controls, quote and backslash goes as it is in a string, U+2028 included.",
+      "input": "json/string-raw-characters.json",
+      "expected": "json/string-raw-characters.expected.json"
+    },
+    {
+      "id": "json/string-unicode-escape",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A \\u escape of an ASCII character.",
+      "input": "json/string-unicode-escape.json",
+      "expected": "json/string-unicode-escape.expected.json"
+    },
+    {
+      "id": "json/bom",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A byte order mark at the start is ignored.",
+      "input": "json/bom.json",
+      "expected": "json/bom.expected.json"
+    },
+    {
+      "id": "json/limit-nesting",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; STXT-SPEC §11.2",
+      "description": "Nesting up to the default limit of 100 is read.",
+      "input": "json/limit-nesting.json",
+      "expected": "json/limit-nesting.expected.json",
+      "requirement": "SHOULD"
+    },
+    {
+      "id": "json/limit-number-length",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; STXT-SPEC §11.2",
+      "description": "A number of 10000 characters in plain notation, the default line length, is read.",
+      "input": "json/limit-number-length.json",
+      "expected": "json/limit-number-length.expected.json",
+      "requirement": "SHOULD"
+    },
+    {
+      "id": "json/duplicate-key",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259 §4",
+      "description": "A duplicate key is accepted: the last value wins, and the key stays where it first appeared, as JSON.parse, json.loads and Jackson read it.",
+      "input": "json/duplicate-key.json",
+      "expected": "json/duplicate-key.expected.json"
+    },
+    {
+      "id": "json/surrogate-high-alone",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259 §8.2",
+      "description": "An escaped high surrogate alone is accepted and kept as it is.",
+      "input": "json/surrogate-high-alone.json",
+      "expected": "json/surrogate-high-alone.expected.json"
+    },
+    {
+      "id": "json/surrogate-low-alone",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259 §8.2",
+      "description": "An escaped low surrogate alone is accepted and kept as it is.",
+      "input": "json/surrogate-low-alone.json",
+      "expected": "json/surrogate-low-alone.expected.json"
+    },
+    {
+      "id": "json/surrogate-high-then-escape",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259 §8.2",
+      "description": "An escaped high surrogate followed by an escape that is not a low surrogate: two characters, kept as they are.",
+      "input": "json/surrogate-high-then-escape.json",
+      "expected": "json/surrogate-high-then-escape.expected.json"
+    },
+    {
+      "id": "json/surrogate-high-then-character",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259 §8.2",
+      "description": "An escaped high surrogate followed by a character: two characters, kept as they are.",
+      "input": "json/surrogate-high-then-character.json",
+      "expected": "json/surrogate-high-then-character.expected.json"
+    },
+    {
+      "id": "json/surrogate-low-then-high",
+      "category": "json",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259 §8.2",
+      "description": "An escaped low surrogate followed by a high one is no pair: two lone surrogates, kept as they are.",
+      "input": "json/surrogate-low-then-high.json",
+      "expected": "json/surrogate-low-then-high.expected.json"
+    },
+    {
+      "id": "json/empty",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An empty text.",
+      "input": "json/empty.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/only-blanks",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A text with only blanks.",
+      "input": "json/only-blanks.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/object-only-comma",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An object with only a comma.",
+      "input": "json/object-only-comma.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/array-trailing-comma",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A comma after the last element.",
+      "input": "json/array-trailing-comma.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/array-leading-comma",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A comma before the first element.",
+      "input": "json/array-leading-comma.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/object-trailing-comma",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A comma after the last member.",
+      "input": "json/object-trailing-comma.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/single-quotes",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "Single quotes.",
+      "input": "json/single-quotes.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/key-unquoted",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A key without quotes.",
+      "input": "json/key-unquoted.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/key-number",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A number as a key.",
+      "input": "json/key-number.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/member-no-colon",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A member without a colon.",
+      "input": "json/member-no-colon.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/array-no-comma",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "Elements without a comma.",
+      "input": "json/array-no-comma.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/number-leading-zero",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A leading zero.",
+      "input": "json/number-leading-zero.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/number-negative-leading-zero",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A leading zero after the minus.",
+      "input": "json/number-negative-leading-zero.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/number-no-fraction-digits",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A point with no digits after it.",
+      "input": "json/number-no-fraction-digits.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/number-no-integer-digits",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A point with no digits before it.",
+      "input": "json/number-no-integer-digits.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/number-plus",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A plus sign.",
+      "input": "json/number-plus.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/number-only-minus",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A minus with no digits.",
+      "input": "json/number-only-minus.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/number-no-exponent-digits",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An exponent with no digits.",
+      "input": "json/number-no-exponent-digits.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/number-no-exponent-digits-sign",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An exponent with a sign and no digits.",
+      "input": "json/number-no-exponent-digits-sign.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/number-hexadecimal",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A hexadecimal number.",
+      "input": "json/number-hexadecimal.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/nan",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "NaN.",
+      "input": "json/nan.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/infinity",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "Infinity.",
+      "input": "json/infinity.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/negative-infinity",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "-Infinity.",
+      "input": "json/negative-infinity.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/literal-incomplete-true",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An incomplete true.",
+      "input": "json/literal-incomplete-true.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/literal-incomplete-null",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An incomplete null.",
+      "input": "json/literal-incomplete-null.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/literal-upper-case",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A literal in upper case.",
+      "input": "json/literal-upper-case.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/string-unclosed",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A string without its closing quote.",
+      "input": "json/string-unclosed.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/string-line-feed",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A raw line feed inside a string.",
+      "input": "json/string-line-feed.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/string-tab",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A raw tab inside a string.",
+      "input": "json/string-tab.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/string-unknown-escape",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An escape that does not exist.",
+      "input": "json/string-unknown-escape.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/string-short-unicode-escape",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A \\u escape with fewer than four digits.",
+      "input": "json/string-short-unicode-escape.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/string-unicode-escape-not-hex",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A \\u escape with a digit that is not hexadecimal.",
+      "input": "json/string-unicode-escape-not-hex.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/string-unicode-escape-fullwidth",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A \\u escape with a full-width digit.",
+      "input": "json/string-unicode-escape-fullwidth.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/two-values-object-array",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "Two values: an object and an array.",
+      "input": "json/two-values-object-array.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/two-values-numbers",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "Two values: two numbers.",
+      "input": "json/two-values-numbers.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/comment-block",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A block comment.",
+      "input": "json/comment-block.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/comment-line",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A line comment.",
+      "input": "json/comment-line.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/array-extra-bracket",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An extra closing bracket.",
+      "input": "json/array-extra-bracket.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/object-extra-brace",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An extra closing brace.",
+      "input": "json/object-extra-brace.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/two-values-strings",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "Two values: two strings.",
+      "input": "json/two-values-strings.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/blank-vertical-tab",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A vertical tab is not a blank of JSON.",
+      "input": "json/blank-vertical-tab.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/blank-no-break-space",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A no-break space is not a blank of JSON.",
+      "input": "json/blank-no-break-space.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/blank-line-separator",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "U+2028 is not a blank of JSON.",
+      "input": "json/blank-line-separator.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/bom-not-at-start",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "A byte order mark that is not at the start.",
+      "input": "json/bom-not-at-start.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 1
+      }
+    },
+    {
+      "id": "json/error-line",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; RFC 8259",
+      "description": "An error carries the line where it is detected.",
+      "input": "json/error-line.json",
+      "error": {
+        "code": "JSON_NOT_VALID",
+        "line": 3
+      }
+    },
+    {
+      "id": "json/limit-nesting-exceeded",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; STXT-SPEC §11.2",
+      "description": "Nesting beyond the default limit of 100.",
+      "input": "json/limit-nesting-exceeded.json",
+      "error": {
+        "code": "LIMIT_NESTING_EXCEEDED",
+        "line": 1
+      },
+      "requirement": "SHOULD"
+    },
+    {
+      "id": "json/limit-number-length-exponent",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; STXT-SPEC §11.2",
+      "description": "A number that would have 10001 characters in plain notation.",
+      "input": "json/limit-number-length-exponent.json",
+      "error": {
+        "code": "LIMIT_LINE_LENGTH_EXCEEDED",
+        "line": 1
+      },
+      "requirement": "SHOULD"
+    },
+    {
+      "id": "json/limit-number-length-huge-exponent",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; STXT-SPEC §11.2",
+      "description": "A few bytes of JSON with a billion digits in plain notation.",
+      "input": "json/limit-number-length-huge-exponent.json",
+      "error": {
+        "code": "LIMIT_LINE_LENGTH_EXCEEDED",
+        "line": 1
+      },
+      "requirement": "SHOULD"
+    },
+    {
+      "id": "json/limit-number-length-exponent-overflow",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; STXT-SPEC §11.2",
+      "description": "An exponent beyond the range of a 32-bit integer.",
+      "input": "json/limit-number-length-exponent-overflow.json",
+      "error": {
+        "code": "LIMIT_LINE_LENGTH_EXCEEDED",
+        "line": 1
+      },
+      "requirement": "SHOULD"
+    },
+    {
+      "id": "json/limit-number-length-digits",
+      "category": "json-error",
+      "spec": "STXT-TRANSFORM-SPEC §1; STXT-SPEC §11.2",
+      "description": "A number written with 10001 digits.",
+      "input": "json/limit-number-length-digits.json",
+      "error": {
+        "code": "LIMIT_LINE_LENGTH_EXCEEDED",
+        "line": 1
+      },
+      "requirement": "SHOULD"
+    }
+  ]
+}

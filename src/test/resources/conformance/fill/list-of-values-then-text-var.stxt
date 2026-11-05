@@ -1,0 +1,2 @@
+# A node that takes its value from the list has nothing else: no ${var}.
+Parcel: [parcels] ${weight}

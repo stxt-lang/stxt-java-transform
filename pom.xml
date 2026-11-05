@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>dev.stxt</groupId>
+    <artifactId>stxt-transform</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <!-- Metadata required by Maven Central (name, description, url, license, developers and scm),
+         the same as those of dev.stxt:stxt-core. -->
+    <name>STXT Transform</name>
+    <description>Transforms of STXT documents: export to JSON, import from JSON and fill of Slots with JSON data.</description>
+    <url>https://github.com/stxt-lang/stxt-java-transform</url>
+    <inceptionYear>2026</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/license/mit</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Joan Costa Mombiela</name>
+            <email>joan.costa.mombiela@gmail.com</email>
+            <url>https://github.com/stxt-lang</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/stxt-lang/stxt-java-transform.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/stxt-lang/stxt-java-transform.git</developerConnection>
+        <url>https://github.com/stxt-lang/stxt-java-transform</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/stxt-lang/stxt-java-transform/issues</url>
+    </issueManagement>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Reproducible build: fixes the dates inside the jar. Updated on each release. -->
+        <project.build.outputTimestamp>2026-11-05T00:00:00Z</project.build.outputTimestamp>
+        <junit.version>5.10.2</junit.version>
+        <jackson.version>2.22.1</jackson.version>
+    </properties>
+
+    <dependencies>
+        <!-- Official STXT parser and validator: the transforms read and build its nodes, and export and import are
+             guided by its schemas. The only runtime dependency.
+             Latest version at https://central.sonatype.com/artifact/dev.stxt/stxt-core -->
+        <dependency>
+            <groupId>dev.stxt</groupId>
+            <artifactId>stxt-core</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Reads the manifest of the cases and compares the canonical trees, independently of the JSON reader
+             under test (TransformCasesTest). Tests only: the transforms have their own JSON. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Build rules, checked first (validate): the JDK the code is written for, and a single version of each
+                 dependency in the tree. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[17,)</version>
+                                </requireJavaVersion>
+                                <dependencyConvergence/>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <!-- Every javac warning is shown, without failing the build (no -Werror). -->
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                    </compilerArgs>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+
+            <!-- Packaging. The version is pinned so that the build does not depend on the default one of each
+                 Maven version. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <!-- Stable module name for JPMS consumers, while there is no
+                                 module-info.java. The one of stxt-core is dev.stxt. -->
+                            <Automatic-Module-Name>dev.stxt.transform</Automatic-Module-Name>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- Central requires the sources jar alongside the binary. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Central also requires the javadoc jar. doclint checks the HTML, the references and the syntax of the
+                 comments, but not the missing ones (-missing), as in stxt-pdf. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.11.2</version>
+                <configuration>
+                    <doclint>all,-missing</doclint>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- GPG signing only when publishing: `mvn -Prelease ...`. Outside this profile the daily build needs
+             neither key nor passphrase. It is the same profile as the one of stxt-core and stxt-pdf. -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.7</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Uploads the signed bundle to the Central Portal (deploy phase). `extensions` is essential:
+                         it registers the lifecycle participant that disables the maven-deploy-plugin, which otherwise
+                         would also try to deploy to a <distributionManagement> that does not exist. -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.11.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <!-- id of the <server> in ~/.m2/settings.xml that holds the Portal user token (not the
+                                 account password). -->
+                            <publishingServerId>central</publishingServerId>
+                            <!-- The deploy leaves the deployment validated and *pending* in the Portal, to review
+                                 and confirm it by hand from the website. Once published on Central it cannot be
+                                 withdrawn or replaced. -->
+                            <autoPublish>false</autoPublish>
+                            <!-- Waits for the Portal to validate the bundle, so that a validation error fails the
+                                 build instead of staying hidden on the website. -->
+                            <waitUntil>VALIDATED</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

@@ -1,0 +1,10 @@
+{
+	"Name": "web-01",
+	"Active": true,
+	"Ports": [80, 443],
+	"Owner": {
+		"Person": "Ana Ruiz",
+		"Email": "ana@example.com"
+	},
+	"Notes": "Restart after every deployment.\nDo not switch off during office hours."
+}

@@ -1,0 +1,5 @@
+# [?list] and {?object} with a data item behave as [list] and {object}.
+Order:
+	Line: [?lines]<product>
+	Customer: {?customer}
+		Name: <name>

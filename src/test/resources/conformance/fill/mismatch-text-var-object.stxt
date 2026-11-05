@@ -1,0 +1,2 @@
+# ${var} expects a string, a number or a boolean, not an object.
+Customer: ${customer}

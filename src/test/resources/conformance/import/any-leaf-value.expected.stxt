@@ -1,0 +1,6 @@
+Server (com.example.servers):
+	Name: 1.10
+	Active: true
+	Ports:
+		Port: 80
+		Port: 443

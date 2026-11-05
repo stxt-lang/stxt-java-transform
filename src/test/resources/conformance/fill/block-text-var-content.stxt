@@ -1,0 +1,3 @@
+# ${var} as the only line of a block gives the same as <var>.
+Notes >>
+	${notes}

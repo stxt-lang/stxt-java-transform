@@ -1,0 +1,31 @@
+Order (com.example.orders): 2026-0142
+	Date: 2026-10-12
+	Currency: EUR
+	Customer:
+		Name: Athena Bookshop
+		Email: orders@athena.example
+	Line: A5 notebook
+		Quantity: 40
+		Price: 3.25
+		Note: Blue cover
+	Line: HB pencil
+		Quantity: 200
+		Price: 0.45
+	Shipment:
+		Carrier: Royal Mail
+		Reference: 2026-0142/Royal Mail
+		Parcel: R-01
+		Parcel: R-02
+	Shipment:
+		Carrier: DHL
+		Reference: 2026-0142/DHL
+		Parcel: D-07
+	Instructions >>
+		Order 2026-0142, dated 2026-10-12.
+		Deliver in the morning.
+	Label >>
+		Order 2026-0142
+		Carrier: Royal Mail
+	Label >>
+		Order 2026-0142
+		Carrier: DHL

@@ -1,0 +1,4 @@
+# A first block line with only navigation applies and is not copied.
+Label >>
+	[shipments]
+	Carrier: ${carrier}

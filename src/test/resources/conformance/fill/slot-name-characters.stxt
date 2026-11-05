@@ -1,0 +1,3 @@
+# The name of a Slot has ASCII letters, digits, hyphens and underscores.
+V: ${x1} ${customer-data} ${id_2} ${X}
+W: [my-shipments_2]

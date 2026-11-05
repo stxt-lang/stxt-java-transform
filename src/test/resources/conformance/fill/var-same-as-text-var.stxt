@@ -1,0 +1,3 @@
+# <var> and a text that is only ${var} give the same.
+A: <d>
+B: ${d}

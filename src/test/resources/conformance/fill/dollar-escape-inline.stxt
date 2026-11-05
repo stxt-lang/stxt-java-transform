@@ -1,0 +1,2 @@
+# $${ is a literal ${, also before what is not a Slot.
+V: $${n} is ${n}, $${a b}

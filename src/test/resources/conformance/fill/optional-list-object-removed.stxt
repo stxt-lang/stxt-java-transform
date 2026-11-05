@@ -1,0 +1,6 @@
+# [?list] and {?object} with no data item remove the node, with its children.
+Order: 1
+	Line: [?lines]
+		Quantity: <quantity>
+	Customer: {?customer}
+		Name: <name>

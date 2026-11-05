@@ -1,0 +1,10 @@
+# Strings, numbers and booleans put their text; decimals keep their trailing zeros and
+# nothing is written in exponent form.
+V:
+	S: <s>
+	N: <n>
+	D: <d>
+	Z: <z>
+	G: <g>
+	E: <e>
+	B: <b>

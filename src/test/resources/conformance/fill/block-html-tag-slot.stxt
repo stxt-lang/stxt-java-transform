@@ -1,0 +1,3 @@
+# An HTML block cannot start with a tag that has the form of a Slot.
+Html >>
+	<p>Hello</p>

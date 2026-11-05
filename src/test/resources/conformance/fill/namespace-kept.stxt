@@ -1,0 +1,3 @@
+# The namespace stays where the document with Slots declares it.
+Order (com.example.orders): <n>
+	Date: <d>
