@@ -6,7 +6,7 @@
 
     <groupId>dev.stxt</groupId>
     <artifactId>stxt-transform</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
     <packaging>jar</packaging>
 
     <!-- Metadata required by Maven Central (name, description, url, license, developers and scm),
@@ -48,7 +48,7 @@
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Reproducible build: fixes the dates inside the jar. Updated on each release. -->
-        <project.build.outputTimestamp>2026-11-05T00:00:00Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-11-05T20:00:00Z</project.build.outputTimestamp>
         <junit.version>5.10.2</junit.version>
         <jackson.version>2.22.1</jackson.version>
     </properties>

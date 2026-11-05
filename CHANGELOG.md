@@ -5,7 +5,7 @@ All notable changes to `dev.stxt:stxt-transform` are documented in this file, ne
 The format follows [Keep a Changelog](http://keepachangelog.com/). While the version starts with `0.`, the Java API
 and the error codes may change between minor versions, as *STXT-TRANSFORM-SPEC* does while it is in `Genesis`.
 
-## [Unreleased]
+## [0.1.0] - 2026-11-05
 
 First version. The package `dev.stxt.transform` comes from `dev.stxt:stxt-core`, where it was never published.
 
