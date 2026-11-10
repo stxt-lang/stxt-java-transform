@@ -9,11 +9,9 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.DynamicTest;
@@ -59,8 +57,7 @@ public class TransformCasesTest {
 
 	private static final File DIRECTORY = new File("src/test/resources/conformance");
 
-	// Jackson reads the manifest and compares the canonical trees, so that the JSON reader under
-	// test does not check itself
+	// Reads the manifest and the canonical trees, with the default configuration of Jackson
 	private static final ObjectMapper JACKSON = new ObjectMapper();
 
 	private static String read(String path) {
@@ -101,18 +98,23 @@ public class TransformCasesTest {
 
 	// Two values of the JSON reader are the same with their members in the same order, and
 	// numbers with the same text in plain notation
-	private static void assertSameJson(Object expected, Object actual, String where) {
-		if (expected instanceof Map<?, ?> e && actual instanceof Map<?, ?> a) {
-			assertEquals(new ArrayList<>(e.keySet()), new ArrayList<>(a.keySet()), where + ": keys");
-			for (Object key: e.keySet())
-				assertSameJson(e.get(key), a.get(key), where + "." + key);
+	private static void assertSameJson(JsonNode expected, JsonNode actual, String where) {
+		assertEquals(expected.getNodeType(), actual.getNodeType(), where + ": type");
+		if (expected.isObject()) {
+			List<String> keys = new ArrayList<>();
+			expected.fieldNames().forEachRemaining(keys::add);
+			List<String> actualKeys = new ArrayList<>();
+			actual.fieldNames().forEachRemaining(actualKeys::add);
+			assertEquals(keys, actualKeys, where + ": keys");
+			for (String key: keys)
+				assertSameJson(expected.get(key), actual.get(key), where + "." + key);
 		}
-		else if (expected instanceof List<?> e && actual instanceof List<?> a) {
-			assertEquals(e.size(), a.size(), where + ": size");
-			for (int i = 0; i < e.size(); i++)
-				assertSameJson(e.get(i), a.get(i), where + "[" + i + "]");
+		else if (expected.isArray()) {
+			assertEquals(expected.size(), actual.size(), where + ": size");
+			for (int i = 0; i < expected.size(); i++)
+				assertSameJson(expected.get(i), actual.get(i), where + "[" + i + "]");
 		}
-		else if (expected instanceof BigDecimal && actual instanceof BigDecimal) {
+		else if (expected.isNumber()) {
 			assertEquals(Json.text(expected), Json.text(actual), where);
 		}
 		else {

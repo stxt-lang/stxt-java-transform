@@ -5,11 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import dev.stxt.exceptions.LimitException;
 import dev.stxt.exceptions.ParseException;
@@ -21,6 +24,8 @@ import dev.stxt.exceptions.ParseException;
  */
 public class JsonTest {
 
+	private static final JsonNodeFactory NODES = JsonNodeFactory.instance;
+
 	private static void assertNotJson(String text) {
 		TransformException e = assertThrows(TransformException.class, () -> Json.read(text), text);
 		assertEquals("JSON_NOT_VALID", e.getCode(), e.toString());
@@ -30,11 +35,15 @@ public class JsonTest {
 		return assertThrows(LimitException.class, () -> Json.read(text, maxNesting, maxNumberLength, maxInputSize)).getCode();
 	}
 
-	private static Map<String, Object> object(Object... members) {
-		Map<String, Object> object = new LinkedHashMap<>();
+	private static ObjectNode object(Object... members) {
+		ObjectNode object = NODES.objectNode();
 		for (int i = 0; i < members.length; i += 2)
-			object.put((String) members[i], members[i + 1]);
+			object.set((String) members[i], (JsonNode) members[i + 1]);
 		return object;
+	}
+
+	private static ArrayNode array(JsonNode... elements) {
+		return NODES.arrayNode().addAll(List.of(elements));
 	}
 
 	// ----------------------------------------------------------------
@@ -43,8 +52,8 @@ public class JsonTest {
 
 	@Test
 	void keepsUnpairedSurrogatesInTheText() {
-		assertEquals("\uD800", Json.read("\"\uD800\""));
-		assertEquals("\uDC00\uD800x", Json.read("\"\uDC00\uD800x\""));
+		assertEquals("\uD800", Json.read("\"\uD800\"").textValue());
+		assertEquals("\uDC00\uD800x", Json.read("\"\uDC00\uD800x\"").textValue());
 	}
 
 	@Test
@@ -75,6 +84,11 @@ public class JsonTest {
 	void limitsTheLengthOfANumberInPlainNotation() {
 		assertEquals("LIMIT_LINE_LENGTH_EXCEEDED", limitCode("-0.0000001", 100, 9, -1));
 		assertEquals("-0.000001", Json.text(Json.read("-0.000001", 100, 9, -1)));
+		// Also inside an object and an array, with the line of the number
+		LimitException e = assertThrows(LimitException.class, () -> Json.read("{\n\"a\": [1,\n1e10]}", 100, 9, -1));
+		assertEquals("LIMIT_LINE_LENGTH_EXCEEDED@3", e.getCode() + "@" + e.getLine());
+		e = assertThrows(LimitException.class, () -> Json.read("{\n\"a\":\n1234567890}", 100, 9, -1));
+		assertEquals("LIMIT_LINE_LENGTH_EXCEEDED@3", e.getCode() + "@" + e.getLine());
 	}
 
 	// ----------------------------------------------------------------
@@ -83,13 +97,13 @@ public class JsonTest {
 
 	@Test
 	void writesObjectsMemberByMemberAndArraysOfValuesOnOneLine() {
-		Map<String, Object> json = object(
-				"Name", "web-01",
-				"Active", true,
-				"Ports", List.of(new BigInteger("80"), new BigInteger("443")),
-				"Owners", List.of(object("Person", "Ana"), object()),
-				"Empty", List.of(),
-				"Nested", List.of(List.of(new BigDecimal("1.50"))));
+		ObjectNode json = object(
+				"Name", NODES.textNode("web-01"),
+				"Active", NODES.booleanNode(true),
+				"Ports", array(NODES.numberNode(new BigInteger("80")), NODES.numberNode(new BigInteger("443"))),
+				"Owners", array(object("Person", NODES.textNode("Ana")), object()),
+				"Empty", array(),
+				"Nested", array(array(NODES.numberNode(new BigDecimal("1.50")))));
 		assertEquals(String.join("\n",
 				"{",
 				"\t\"Name\": \"web-01\",",
@@ -107,18 +121,19 @@ public class JsonTest {
 				"\t]",
 				"}"), Json.write(json));
 		assertEquals("{}", Json.write(object()));
-		assertEquals("\"a\"", Json.write("a"));
+		assertEquals("\"a\"", Json.write(NODES.textNode("a")));
 	}
 
 	@Test
 	void escapesWhatJsonRequiresAndUnpairedSurrogates() {
-		assertEquals("\"\\\"\\\\\\b\\f\\n\\r\\t\\u0001\\u001f/é😀 \"", Json.write("\"\\\b\f\n\r\t\u0001\u001f/é😀 "));
-		assertEquals("\"\\ud800x\\udc00\"", Json.write("\uD800x\uDC00"));
+		assertEquals("\"\\\"\\\\\\b\\f\\n\\r\\t\\u0001\\u001f/é😀 \"", Json.write(NODES.textNode("\"\\\b\f\n\r\t\u0001\u001f/é😀 ")));
+		assertEquals("\"\\ud800x\\udc00\"", Json.write(NODES.textNode("\uD800x\uDC00")));
 	}
 
 	@Test
 	void readsWhatItWrites() {
-		Map<String, Object> json = object("s", "a\"\n\\b\u0001😀", "n", new BigDecimal("-1.10E+5"), "l", List.of(object("x", true)));
+		ObjectNode json = object("s", NODES.textNode("a\"\n\\b\u0001😀"), "n", NODES.numberNode(new BigDecimal("-1.10E+5")),
+				"l", array(object("x", NODES.booleanNode(true))));
 		assertEquals(json, Json.read(Json.write(json)));
 	}
 }

@@ -2,9 +2,10 @@ package dev.stxt.transform;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import dev.stxt.InlineNode;
 import dev.stxt.Node;
@@ -57,24 +58,24 @@ public final class FillJson {
 	}
 
 	// Where Slots are looked up: the current element and, above it, what contains it
-	private record Context(Object data, Context parent) {
+	private record Context(JsonNode data, Context parent) {
 		// The navigation looks only in the current element
-		Object find(String name) {
-			return data instanceof Map<?, ?> object ? object.get(name) : null;
+		JsonNode find(String name) {
+			return data.isObject() ? Json.data(data.get(name)) : null;
 		}
 
 		// The text goes upwards until a level has the key; a null there counts as absent and ends
 		// the lookup
-		Object lookup(String name) {
+		JsonNode lookup(String name) {
 			for (Context c = this; c != null; c = c.parent)
-				if (c.data instanceof Map<?, ?> object && object.containsKey(name))
-					return object.get(name);
+				if (c.data.isObject() && c.data.has(name))
+					return Json.data(c.data.get(name));
 			return null;
 		}
 	}
 
 	// A copy of the node: where its Slots are looked up, and the value a <var> gives it, if any
-	private record Copy(Context context, Object value) {
+	private record Copy(Context context, JsonNode value) {
 	}
 
 	/**
@@ -162,19 +163,19 @@ public final class FillJson {
 				Context c = copy.context();
 				if (Json.isValue(c.data()))
 					throw error(node, "SLOT_MISPLACED", "A list of values gives the value of the node; nothing can follow it: " + slot.source());
-				Object data = c.find(slot.name());
+				JsonNode data = c.find(slot.name());
 				if (data == null) {
 					if (slot.optional())
 						continue;
 					throw error(node, "SLOT_NO_DATA", "No data for " + slot.source());
 				}
 				if (slot.kind() == '{') {
-					if (!(data instanceof Map))
+					if (!data.isObject())
 						throw error(node, "SLOT_DATA_MISMATCH", slot.source() + " expects an object, not " + Json.kind(data));
 					next.add(new Copy(new Context(data, c), null));
 				} else if (slot.kind() == '[') {
-					for (Object e : checkList(node, slot, data))
-						if (e != null)
+					for (JsonNode e : checkList(node, slot, data))
+						if (!e.isNull())
 							next.add(new Copy(new Context(e, c), null));
 				} else {
 					next.add(new Copy(c, checkValue(node, slot, data)));
@@ -185,26 +186,26 @@ public final class FillJson {
 		return current;
 	}
 
-	private static Object checkValue(Node node, Slot slot, Object data) {
+	private static JsonNode checkValue(Node node, Slot slot, JsonNode data) {
 		if (!Json.isValue(data))
 			throw error(node, "SLOT_DATA_MISMATCH", slot.source() + " expects a string, a number or a boolean, not " + Json.kind(data));
 		return data;
 	}
 
-	private static List<?> checkList(Node node, Slot slot, Object data) {
-		if (!(data instanceof List<?> array))
+	private static JsonNode checkList(Node node, Slot slot, JsonNode data) {
+		if (!data.isArray())
 			throw error(node, "SLOT_DATA_MISMATCH", slot.source() + " expects an array, not " + Json.kind(data));
 		boolean objects = false;
 		boolean values = false;
-		for (Object e : array) {
-			if (e instanceof List)
+		for (JsonNode e : data) {
+			if (e.isArray())
 				throw error(node, "SLOT_DATA_MISMATCH", slot.source() + " has an array inside the array");
-			objects |= e instanceof Map;
+			objects |= e.isObject();
 			values |= Json.isValue(e);
 		}
 		if (objects && values)
 			throw error(node, "SLOT_DATA_MISMATCH", slot.source() + " mixes values and objects");
-		return array;
+		return data;
 	}
 
 	// The element of a list of values is the value of the node, which has nothing else
@@ -264,7 +265,7 @@ public final class FillJson {
 				continue;
 			}
 			Slot slot = new Slot('$', m.group(2), m.group(1) != null, m.group());
-			Object data = context.lookup(slot.name());
+			JsonNode data = context.lookup(slot.name());
 			if (data == null && !slot.optional())
 				throw error(node, "SLOT_NO_DATA", "No data for " + slot.source());
 			if (data != null)

@@ -1,7 +1,8 @@
 package dev.stxt.transform;
 
-import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import dev.stxt.InlineNode;
 import dev.stxt.Node;
@@ -52,7 +53,7 @@ public final class ImportJson {
 		return importNode(Json.read(json), name, namespace);
 	}
 
-	private Node importNode(Object json, String name, String namespace) {
+	private Node importNode(JsonNode json, String name, String namespace) {
 		NodeDefinition def = definitions.definitionOf(name, namespace, ParseException.NO_LINE);
 
 		if (def.getChildren().isEmpty())
@@ -62,18 +63,18 @@ public final class ImportJson {
 
 		ChildDefinition item = Definitions.itemOf(def);
 		if (item != null) {
-			for (Object element : expectArray(json, def))
+			for (JsonNode element : expectArray(json, def))
 				node.addChild(importNode(element, item.getName(), item.getNamespace()));
 			return node;
 		}
 
-		if (!(json instanceof Map<?, ?> object))
+		if (!json.isObject())
 			throw mismatch(def, "an object", json);
-		for (Map.Entry<?, ?> member : object.entrySet()) {
-			ChildDefinition child = childOf(def, (String) member.getKey());
+		for (Map.Entry<String, JsonNode> member : json.properties()) {
+			ChildDefinition child = childOf(def, member.getKey());
 			if (Definitions.isRepeatable(child)) {
 				NodeDefinition childDef = definitions.definitionOf(child.getName(), child.getNamespace(), ParseException.NO_LINE);
-				for (Object element : expectArray(member.getValue(), childDef))
+				for (JsonNode element : expectArray(member.getValue(), childDef))
 					node.addChild(importNode(element, child.getName(), child.getNamespace()));
 			} else {
 				node.addChild(importNode(member.getValue(), child.getName(), child.getNamespace()));
@@ -82,7 +83,7 @@ public final class ImportJson {
 		return node;
 	}
 
-	private static Node importValue(Object json, NodeDefinition def, String namespace) {
+	private static Node importValue(JsonNode json, NodeDefinition def, String namespace) {
 		if (!Json.isValue(json))
 			throw mismatch(def, "a string, a number or a boolean", json);
 
@@ -100,10 +101,10 @@ public final class ImportJson {
 		return !value.isEmpty() && (value.charAt(0) == ' ' || value.charAt(0) == '\t');
 	}
 
-	private static List<?> expectArray(Object json, NodeDefinition def) {
-		if (!(json instanceof List<?> array))
+	private static JsonNode expectArray(JsonNode json, NodeDefinition def) {
+		if (!json.isArray())
 			throw mismatch(def, "an array", json);
-		return array;
+		return json;
 	}
 
 	// Keys are matched by canonical name, as node names are everywhere else
@@ -116,7 +117,7 @@ public final class ImportJson {
 				"Key '" + key + "' is not a child of '" + def.getName() + "'");
 	}
 
-	private static TransformException mismatch(NodeDefinition def, String expected, Object json) {
+	private static TransformException mismatch(NodeDefinition def, String expected, JsonNode json) {
 		return new TransformException(ParseException.NO_LINE, "IMPORT_DATA_MISMATCH",
 				"Node '" + def.getName() + "' expects " + expected + ", not " + Json.kind(json));
 	}

@@ -50,12 +50,12 @@
         <!-- Reproducible build: fixes the dates inside the jar. Updated on each release. -->
         <project.build.outputTimestamp>2026-11-05T20:00:00Z</project.build.outputTimestamp>
         <junit.version>5.10.2</junit.version>
-        <jackson.version>2.22.1</jackson.version>
+        <jackson.version>2.22.4</jackson.version>
     </properties>
 
     <dependencies>
         <!-- Official STXT parser and validator: the transforms read and build its nodes, and export and import are
-             guided by its schemas. The only runtime dependency.
+             guided by its schemas.
              Latest version at https://central.sonatype.com/artifact/dev.stxt/stxt-core -->
         <dependency>
             <groupId>dev.stxt</groupId>
@@ -63,19 +63,18 @@
             <version>1.0.3</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Reads the manifest of the cases and compares the canonical trees, independently of the JSON reader
-             under test (TransformCasesTest). Tests only: the transforms have their own JSON. -->
+        <!-- The JSON of the transforms: reads the data and the JSON to import, and holds the values.
+             Latest version at https://central.sonatype.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

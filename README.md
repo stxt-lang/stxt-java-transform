@@ -25,8 +25,9 @@ Requires **Java 17** or later.
 </dependency>
 ```
 
-Its only runtime dependency is `dev.stxt:stxt-core`, and it reads and writes JSON with its own
-code. Under JPMS it is an automatic module named `dev.stxt.transform`.
+It depends on `dev.stxt:stxt-core` and, for JSON, on Jackson
+(`com.fasterxml.jackson.core:jackson-databind`). Under JPMS it is an automatic module named
+`dev.stxt.transform`.
 
 ## Filling Slots
 

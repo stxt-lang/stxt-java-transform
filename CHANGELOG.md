@@ -5,6 +5,15 @@ All notable changes to `dev.stxt:stxt-transform` are documented in this file, ne
 The format follows [Keep a Changelog](http://keepachangelog.com/). While the version starts with `0.`, the Java API
 and the error codes may change between minor versions, as *STXT-TRANSFORM-SPEC* does while it is in `Genesis`.
 
+## [Unreleased]
+
+### Changed
+
+- JSON is read with Jackson (`com.fasterxml.jackson.core:jackson-databind` 2.22.4), now a runtime dependency, instead
+  of the own reader. What it accepts and rejects, the error codes, the lines and the limits do not change; the messages
+  of `JSON_NOT_VALID` are those of Jackson. The writer of the export keeps the format of §3.1, which Jackson has no
+  printer for.
+
 ## [0.1.0] - 2026-11-05
 
 First version. The package `dev.stxt.transform` comes from `dev.stxt:stxt-core`, where it was never published.

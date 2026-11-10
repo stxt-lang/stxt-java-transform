@@ -2,10 +2,14 @@ package dev.stxt.transform;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BigIntegerNode;
+import com.fasterxml.jackson.databind.node.DecimalNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import dev.stxt.InlineNode;
 import dev.stxt.Node;
@@ -58,11 +62,11 @@ public final class ExportJson {
 		return Json.write(exportNode(root));
 	}
 
-	private Object exportNode(Node node) {
+	private JsonNode exportNode(Node node) {
 		NodeDefinition def = definitions.definitionOf(node.getName(), node.getNamespace(), node.getLine());
 
 		if (node instanceof TextNode text)
-			return String.join("\n", text.getTextLines());
+			return JsonNodeFactory.instance.textNode(String.join("\n", text.getTextLines()));
 
 		InlineNode inline = (InlineNode) node;
 		if (def.getChildren().isEmpty())
@@ -73,45 +77,44 @@ public final class ExportJson {
 					"Not decided yet: a node with a value and children: " + node.getName());
 
 		if (Definitions.itemOf(def) != null) {
-			List<Object> array = new ArrayList<>();
+			ArrayNode array = JsonNodeFactory.instance.arrayNode();
 			for (Node child : inline.getChildren())
 				array.add(exportNode(child));
 			return array;
 		}
 
-		Map<String, Object> object = new LinkedHashMap<>();
+		ObjectNode object = JsonNodeFactory.instance.objectNode();
 		for (ChildDefinition child : def.getChildren().values()) {
 			List<Node> nodes = inline.getChildren(child.getName(), child.getNamespace());
 			if (nodes.isEmpty())
 				continue;
 			if (Definitions.isRepeatable(child)) {
-				List<Object> array = new ArrayList<>();
+				ArrayNode array = object.putArray(child.getName());
 				for (Node n : nodes)
 					array.add(exportNode(n));
-				object.put(child.getName(), array);
 			} else {
-				object.put(child.getName(), exportNode(nodes.get(0)));
+				object.set(child.getName(), exportNode(nodes.get(0)));
 			}
 		}
 		return object;
 	}
 
-	private static Object exportValue(InlineNode node, String type) {
+	private static JsonNode exportValue(InlineNode node, String type) {
 		String value = node.getValue();
 		try {
 			switch (type) {
 				case "BOOLEAN":
 					if (!"true".equals(value) && !"false".equals(value))
 						throw new NumberFormatException();
-					return Boolean.valueOf(value);
+					return JsonNodeFactory.instance.booleanNode(Boolean.parseBoolean(value));
 				case "INTEGER":
 				case "NATURAL":
-					return new BigInteger(value);
+					return BigIntegerNode.valueOf(new BigInteger(value));
 				case "NUMBER":
 					// NUMBER is not the JSON number (+1, 1., .5, 007): the value is written, not the spelling
-					return new BigDecimal(value);
+					return DecimalNode.valueOf(new BigDecimal(value));
 				default:
-					return value;
+					return JsonNodeFactory.instance.textNode(value);
 			}
 		} catch (NumberFormatException e) {
 			throw new TransformException(node.getLine(), "INVALID_VALUE",
