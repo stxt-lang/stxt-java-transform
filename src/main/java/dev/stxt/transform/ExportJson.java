@@ -4,12 +4,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BigIntegerNode;
-import com.fasterxml.jackson.databind.node.DecimalNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.BigIntegerNode;
+import tools.jackson.databind.node.DecimalNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 import dev.stxt.InlineNode;
 import dev.stxt.Node;
@@ -66,7 +66,7 @@ public final class ExportJson {
 		NodeDefinition def = definitions.definitionOf(node.getName(), node.getNamespace(), node.getLine());
 
 		if (node instanceof TextNode text)
-			return JsonNodeFactory.instance.textNode(String.join("\n", text.getTextLines()));
+			return JsonNodeFactory.instance.stringNode(String.join("\n", text.getTextLines()));
 
 		InlineNode inline = (InlineNode) node;
 		if (def.getChildren().isEmpty())
@@ -114,7 +114,7 @@ public final class ExportJson {
 					// NUMBER is not the JSON number (+1, 1., .5, 007): the value is written, not the spelling
 					return DecimalNode.valueOf(new BigDecimal(value));
 				default:
-					return JsonNodeFactory.instance.textNode(value);
+					return JsonNodeFactory.instance.stringNode(value);
 			}
 		} catch (NumberFormatException e) {
 			throw new TransformException(node.getLine(), "INVALID_VALUE",

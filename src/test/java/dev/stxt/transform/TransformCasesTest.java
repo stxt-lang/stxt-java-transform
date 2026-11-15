@@ -18,9 +18,8 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.function.Executable;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import dev.stxt.Node;
 import dev.stxt.Parser;
@@ -70,23 +69,18 @@ public class TransformCasesTest {
 	}
 
 	private static JsonNode tree(String json) {
-		try {
-			return JACKSON.readTree(json);
-		}
-		catch (JsonProcessingException e) {
-			throw new IllegalArgumentException(e);
-		}
+		return JACKSON.readTree(json);
 	}
 
 	private static String read(JsonNode c, String member) {
-		return read(c.get(member).asText());
+		return read(c.get(member).asString());
 	}
 
 	private static List<UnifiedSchemaProvider> definitions(JsonNode c) {
 		List<UnifiedSchemaProvider> sets = new ArrayList<>();
 		for (JsonNode set: c.get("definitions")) {
 			UnifiedSchemaProvider provider = new UnifiedSchemaProvider();
-			set.forEach(file -> provider.addFile(read(file.asText())));
+			set.forEach(file -> provider.addFile(read(file.asString())));
 			sets.add(provider);
 		}
 		return sets;
@@ -102,9 +96,9 @@ public class TransformCasesTest {
 		assertEquals(expected.getNodeType(), actual.getNodeType(), where + ": type");
 		if (expected.isObject()) {
 			List<String> keys = new ArrayList<>();
-			expected.fieldNames().forEachRemaining(keys::add);
+			expected.propertyNames().forEach(keys::add);
 			List<String> actualKeys = new ArrayList<>();
-			actual.fieldNames().forEachRemaining(actualKeys::add);
+			actual.propertyNames().forEach(actualKeys::add);
 			assertEquals(keys, actualKeys, where + ": keys");
 			for (String key: keys)
 				assertSameJson(expected.get(key), actual.get(key), where + "." + key);
@@ -123,9 +117,9 @@ public class TransformCasesTest {
 	}
 
 	private static void assertFails(JsonNode c, Executable transform) {
-		String expected = c.get("error").get("code").asText() + "@" + c.get("error").get("line").asInt();
-		ParseException e = assertThrows(ParseException.class, transform, c.get("id").asText() + ": no error, expected " + expected);
-		assertEquals(expected, e.getCode() + "@" + e.getLine(), c.get("id").asText() + ": " + e.getMessage());
+		String expected = c.get("error").get("code").asString() + "@" + c.get("error").get("line").asInt();
+		ParseException e = assertThrows(ParseException.class, transform, c.get("id").asString() + ": no error, expected " + expected);
+		assertEquals(expected, e.getCode() + "@" + e.getLine(), c.get("id").asString() + ": " + e.getMessage());
 	}
 
 	@TestFactory
@@ -137,20 +131,20 @@ public class TransformCasesTest {
 			Set<String> ids = new HashSet<>();
 			Set<String> referred = new HashSet<>();
 			for (JsonNode c: cases) {
-				assertTrue(ids.add(c.get("id").asText()), "duplicate case id " + c.get("id").asText());
+				assertTrue(ids.add(c.get("id").asString()), "duplicate case id " + c.get("id").asString());
 				for (String member: List.of("input", "data", "expected"))
-					if (c.has(member)) referred.add(c.get(member).asText());
-				if (c.has("definitions")) c.get("definitions").forEach(set -> set.forEach(file -> referred.add(file.asText())));
+					if (c.has(member)) referred.add(c.get(member).asString());
+				if (c.has("definitions")) c.get("definitions").forEach(set -> set.forEach(file -> referred.add(file.asString())));
 			}
 			for (String path: files(DIRECTORY, ""))
 				assertTrue(referred.contains(path), path + " is not in the manifest");
 		}));
 
 		for (JsonNode c: cases) {
-			String id = c.get("id").asText();
-			String category = c.get("category").asText();
+			String id = c.get("id").asString();
+			String category = c.get("category").asString();
 
-			tests.add(dynamicTest(id + ": " + c.get("description").asText(), () -> {
+			tests.add(dynamicTest(id + ": " + c.get("description").asString(), () -> {
 				String input = read(c, "input");
 				switch (category) {
 					case "fill": {
@@ -174,7 +168,7 @@ public class TransformCasesTest {
 						break;
 					case "import":
 						for (UnifiedSchemaProvider schemas: definitions(c)) {
-							Node imported = new ImportJson(schemas).importJson(input, c.get("node").asText(), c.get("namespace").asText());
+							Node imported = new ImportJson(schemas).importJson(input, c.get("node").asString(), c.get("namespace").asString());
 							assertEquals(tree(canonical(read(c, "expected"))), tree(TreeJson.toCanonicalJson(List.of(imported))), id);
 							if (c.has("valid"))
 								assertEquals(c.get("valid").asBoolean(), new SchemaValidator(schemas, true).validate(imported).isEmpty(), id + ": valid");
@@ -182,7 +176,7 @@ public class TransformCasesTest {
 						break;
 					case "import-error":
 						for (UnifiedSchemaProvider schemas: definitions(c))
-							assertFails(c, () -> new ImportJson(schemas).importJson(input, c.get("node").asText(), c.get("namespace").asText()));
+							assertFails(c, () -> new ImportJson(schemas).importJson(input, c.get("node").asString(), c.get("namespace").asString()));
 						break;
 					case "json":
 						assertSameJson(Json.read(read(c, "expected")), Json.read(input), id);

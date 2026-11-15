@@ -1,25 +1,22 @@
 package dev.stxt.transform;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonLocation;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.core.exc.StreamConstraintsException;
-import com.fasterxml.jackson.core.util.JsonParserDelegate;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.cfg.JsonNodeFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.StreamReadConstraints;
+import tools.jackson.core.TokenStreamLocation;
+import tools.jackson.core.exc.StreamConstraintsException;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.core.util.JsonParserDelegate;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.JsonNodeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import dev.stxt.Constants;
 import dev.stxt.exceptions.LimitException;
@@ -106,24 +103,25 @@ final class Json {
 				throw error(parser.currentTokenLocation(), "Unexpected content after the JSON value");
 			return value;
 		} catch (StreamConstraintsException e) {
-			int maxNesting = mapper.getFactory().streamReadConstraints().getMaxNestingDepth();
+			int maxNesting = mapper.tokenStreamFactory().streamReadConstraints().getMaxNestingDepth();
 			throw new LimitException(locationOf(e, parser).getLineNr(), "LIMIT_NESTING_EXCEEDED",
 					"The JSON text nests more than " + maxNesting + " arrays and objects");
-		} catch (JsonProcessingException e) {
+		} catch (JacksonException e) {
 			throw error(locationOf(e, parser), e.getOriginalMessage());
-		} catch (IOException e) {
-			// A String is read with no I/O
-			throw new UncheckedIOException(e);
+		} catch (NumberFormatException e) {
+			// A number whose exponent does not fit in an int, with no limit on the length: Jackson 3
+			// throws it as it is
+			throw error(parser.currentTokenLocation(), e.getMessage());
 		}
 	}
 
-	private static JsonLocation locationOf(JsonProcessingException e, JsonParser parser) {
+	private static TokenStreamLocation locationOf(JacksonException e, JsonParser parser) {
 		if (e.getLocation() != null || parser == null)
-			return e.getLocation() != null ? e.getLocation() : JsonLocation.NA;
+			return e.getLocation() != null ? e.getLocation() : TokenStreamLocation.NA;
 		return parser.currentLocation();
 	}
 
-	private static TransformException error(JsonLocation location, String message) {
+	private static TransformException error(TokenStreamLocation location, String message) {
 		return new TransformException(location.getLineNr(), "JSON_NOT_VALID", message + " (column " + location.getColumnNr() + ")");
 	}
 
@@ -138,22 +136,22 @@ final class Json {
 		}
 
 		@Override
-		public JsonToken nextToken() throws IOException {
+		public JsonToken nextToken() {
 			JsonToken token = super.nextToken();
-			if (maxLength != -1 && token != null && token.isNumeric() && getTextLength() > maxLength)
+			if (maxLength != -1 && token != null && token.isNumeric() && getStringLength() > maxLength)
 				throw tooLong();
 			return token;
 		}
 
 		@Override
-		public BigDecimal getDecimalValue() throws IOException {
+		public BigDecimal getDecimalValue() {
 			BigDecimal number;
 			try {
 				number = super.getDecimalValue();
-			} catch (JsonParseException e) {
+			} catch (NumberFormatException e) {
 				// The syntax is right, and the exponent does not fit in an int: the number is far
-				// longer than any limit
-				if (maxLength != -1 && e.getCause() instanceof NumberFormatException)
+				// longer than any limit. Jackson 3 throws it as it is, not as a StreamReadException
+				if (maxLength != -1)
 					throw tooLong();
 				throw e;
 			}
@@ -162,8 +160,8 @@ final class Json {
 			return number;
 		}
 
-		private LimitException tooLong() throws IOException {
-			String literal = getText();
+		private LimitException tooLong() {
+			String literal = getString();
 			String start = literal.length() > 20 ? literal.substring(0, 20) + "..." : literal;
 			return new LimitException(currentTokenLocation().getLineNr(), "LIMIT_LINE_LENGTH_EXCEEDED",
 					"The JSON number " + start + " exceeds " + maxLength + " characters in plain notation");
@@ -185,7 +183,7 @@ final class Json {
 
 	/** {@return whether a JSON value is a string, a number or a boolean} */
 	static boolean isValue(JsonNode json) {
-		return json != null && (json.isTextual() || json.isNumber() || json.isBoolean());
+		return json != null && (json.isString() || json.isNumber() || json.isBoolean());
 	}
 
 	/**
@@ -196,7 +194,7 @@ final class Json {
 	static String text(JsonNode value) {
 		if (value.isNumber())
 			return value.decimalValue().toPlainString();
-		return value.asText();
+		return value.asString();
 	}
 
 	/** {@return what a JSON value is, for error messages} */
@@ -207,7 +205,7 @@ final class Json {
 			return "an object";
 		if (json.isArray())
 			return "an array";
-		if (json.isTextual())
+		if (json.isString())
 			return "a string";
 		if (json.isBoolean())
 			return "a boolean";
@@ -238,10 +236,12 @@ final class Json {
 			appendObject(out, json, depth);
 		else if (json.isArray())
 			appendArray(out, json, depth);
-		else if (json.isTextual())
-			appendString(out, json.textValue());
-		else if (json.isNumber() || json.isBoolean() || json.isNull())
-			out.append(json.asText());
+		else if (json.isString())
+			appendString(out, json.stringValue());
+		else if (json.isNull())
+			out.append("null");
+		else if (json.isNumber() || json.isBoolean())
+			out.append(json.asString());
 		else
 			throw new IllegalArgumentException("Not a JSON value: " + json.getNodeType());
 	}
@@ -272,7 +272,7 @@ final class Json {
 		}
 		boolean inline = true;
 		for (JsonNode element : array)
-			inline &= !element.isContainerNode();
+			inline &= !element.isContainer();
 		if (inline) {
 			out.append('[');
 			for (int i = 0; i < array.size(); i++) {

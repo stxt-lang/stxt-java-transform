@@ -2,7 +2,7 @@ package dev.stxt.transform;
 
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import dev.stxt.InlineNode;
 import dev.stxt.Node;

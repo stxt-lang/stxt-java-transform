@@ -6,7 +6,7 @@
 
     <groupId>dev.stxt</groupId>
     <artifactId>stxt-transform</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <!-- Metadata required by Maven Central (name, description, url, license, developers and scm),
@@ -48,9 +48,9 @@
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Reproducible build: fixes the dates inside the jar. Updated on each release. -->
-        <project.build.outputTimestamp>2026-11-05T20:00:00Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-11-15T20:00:00Z</project.build.outputTimestamp>
         <junit.version>5.10.2</junit.version>
-        <jackson.version>2.22.4</jackson.version>
+        <jackson.version>3.3.0</jackson.version>
     </properties>
 
     <dependencies>
@@ -60,13 +60,13 @@
         <dependency>
             <groupId>dev.stxt</groupId>
             <artifactId>stxt-core</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.4</version>
         </dependency>
 
         <!-- The JSON of the transforms: reads the data and the JSON to import, and holds the values.
-             Latest version at https://central.sonatype.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+             Latest version at https://central.sonatype.com/artifact/tools.jackson.core/jackson-databind -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
+            <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
